@@ -7,7 +7,7 @@ import { ClienteDetalhes } from './Pages/ClienteDetalhes';
 import { ClienteForm } from './Pages/ClienteForm'; 
 import { PaginaPrincipal } from './Pages/Home';
 import { ClienteEdit } from './Pages/ClienteEditar';
-import { Login } from './pages/Login';
+import { Login } from './Pages/Login';
 import { AdminRoute } from './components/AdminRoute';
 
 import  { AdiantamentosPage } from './Pages/Adiantamento'
