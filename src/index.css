@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* O erro "border-border" acontece porque o código espera essa variável. 
+   Vamos defini-la manualmente para o erro sumir: */
+@theme {
+  --color-border: var(--border);
+  --border: #e2e8f0; /* uma cor cinza suave padrão */
+}
