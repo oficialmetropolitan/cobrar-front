@@ -17,8 +17,8 @@ export const ClienteEdit: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showExtractor, setShowExtractor] = useState(false);  // ← novo
-  const [filledByPDF, setFilledByPDF] = useState(false);      // ← novo
+  const [showExtractor, setShowExtractor] = useState(false);
+  const [filledByPDF, setFilledByPDF] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -60,6 +60,31 @@ export const ClienteEdit: React.FC = () => {
       .substring(0, 15);
   };
 
+  // ── Mapa: texto extraído do PDF → valor do select ──────────────────────
+  const normalizarModalidade = (raw: string): string => {
+    const map: Record<string, string> = {
+      'ipd':               'IPD',
+      'hospital regional': 'HRSM',
+      'hrsm':              'HRSM',
+      'laboratorio frota': 'LAB FROTA',
+      'laboratório frota': 'LAB FROTA',
+      'lab frota':         'LAB FROTA',
+      'clinica fort':      'clinica_fort',
+      'clínica fort':      'clinica_fort',
+      'd-radio':           'D-RADIO',
+      'dradio':            'D-RADIO',
+      'ipecont':           'IPECONT',
+      'inovacon':          'INOVACON',
+      'vitra':             'VITRA',
+      'wizzer':            'WIZZER',
+      'pj':                'PJ',
+      'pf':                'PF',
+      'coletek':           'coletek',
+      'maquininha':        'MAQUININHA',
+    };
+    return map[raw.toLowerCase().trim()] ?? raw;
+  };
+
   useEffect(() => {
     const carregarCliente = async () => {
       if (!id) return;
@@ -85,16 +110,18 @@ export const ClienteEdit: React.FC = () => {
     carregarCliente();
   }, [id]);
 
-  // ── Preencher a partir do PDF ──────────────────────────────────────────────
+  // ── Preencher a partir do PDF ──────────────────────────────────────────
   const handleCCBExtracted = (data: CCBExtractedData) => {
     setFormData(prev => ({
       ...prev,
-      nome:          data.nome          ? data.nome                          : prev.nome,
-      cpf_cnpj:      data.cpf_cnpj      ? maskCPFCNPJ(data.cpf_cnpj)         : prev.cpf_cnpj,
-      telefone:      data.telefone      ? maskTelefone(data.telefone)         : prev.telefone,
-      email:         data.email         ? data.email                          : prev.email,
+      nome:           data.nome          ? data.nome                           : prev.nome,
+      cpf_cnpj:       data.cpf_cnpj      ? maskCPFCNPJ(data.cpf_cnpj)          : prev.cpf_cnpj,
+      telefone:       data.telefone      ? maskTelefone(data.telefone)          : prev.telefone,
+      email:          data.email         ? data.email                           : prev.email,
       dia_vencimento: data.dia_vencimento ?? prev.dia_vencimento,
-      modalidade:    data.modalidade    ? data.modalidade                     : prev.modalidade,
+      modalidade:     data.modalidade
+                        ? normalizarModalidade(data.modalidade)
+                        : prev.modalidade,
     }));
     setFilledByPDF(true);
     setShowExtractor(false);
@@ -186,12 +213,15 @@ export const ClienteEdit: React.FC = () => {
           </div>
         </header>
 
-        {/* ── Painel do Extrator CCB ── */}
-        {showExtractor && (
-          <div className="mb-6">
-            <CCBExtractor onDataExtracted={handleCCBExtracted} />
-          </div>
-        )}
+      
+    
+            {showExtractor && (
+  <div className="mb-6">
+    <CCBExtractor onDataExtracted={handleCCBExtracted} mode="cliente" /> {/* ← aqui */}
+  </div>
+)}
+      
+       
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">

@@ -22,9 +22,10 @@ type Status = 'idle' | 'uploading' | 'success' | 'error';
 
 type Props = {
   onDataExtracted: (data: CCBExtractedData) => void;
+  mode?: 'cliente' | 'contrato'; // ← novo
 };
 
-export const CCBExtractor: React.FC<Props> = ({ onDataExtracted }) => {
+export const CCBExtractor: React.FC<Props> = ({ onDataExtracted, mode = 'contrato' }) => {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [fileName, setFileName] = useState('');
@@ -42,7 +43,7 @@ export const CCBExtractor: React.FC<Props> = ({ onDataExtracted }) => {
     setErrorMsg('');
     setStatus('uploading');
 
-try {
+    try {
       const response = await CCBService.extrairDados(file);
       const data: CCBExtractedData = response.data;
       setExtracted(data);
@@ -71,6 +72,29 @@ try {
       ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
       : '—';
 
+  // ── Campos do preview filtrados por mode ──────────────────────────────────
+  const previewFields = (data: CCBExtractedData) => {
+    const clienteFields = [
+      { label: 'Nome',         value: data.nome,       full: true },
+      { label: 'CPF/CNPJ',    value: data.cpf_cnpj },
+      { label: 'Telefone',    value: data.telefone },
+      { label: 'E-mail',      value: data.email,       full: true },
+      { label: 'Modalidade',  value: data.modalidade },
+      { label: 'Vencimento',  value: data.dia_vencimento ? `Dia ${data.dia_vencimento}` : '—' },
+    ];
+
+    const contratoFields = [
+      ...clienteFields,
+      { label: 'Valor enviado', value: fmt(data.valor_enviado) },
+      { label: 'Montante',      value: fmt(data.montante) },
+      { label: 'Taxa mensal',   value: `${data.taxa_mensal}%` },
+      { label: 'Parcelas',      value: `${data.num_parcelas}x` },
+      { label: 'Spread total',  value: fmt(data.spread_total) },
+    ];
+
+    return mode === 'cliente' ? clienteFields : contratoFields;
+  };
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
@@ -82,7 +106,9 @@ try {
             Importar CCB (PDF)
           </h2>
           <p className="text-xs text-slate-400 mt-0.5 font-medium">
-            Envie o contrato e preencha o formulário automaticamente
+            {mode === 'cliente'
+              ? 'Preenche apenas os dados do cliente'
+              : 'Envie o contrato e preencha o formulário automaticamente'}
           </p>
         </div>
         {status !== 'idle' && (
@@ -148,26 +174,16 @@ try {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Nome', value: extracted.nome, full: true },
-                { label: 'CPF/CNPJ', value: extracted.cpf_cnpj },
-                { label: 'Telefone', value: extracted.telefone },
-                { label: 'E-mail', value: extracted.email, full: true },
-                { label: 'Valor enviado', value: fmt(extracted.valor_enviado) },
-                { label: 'Montante', value: fmt(extracted.montante) },
-                { label: 'Taxa mensal', value: `${extracted.taxa_mensal}%` },
-                { label: 'Parcelas', value: `${extracted.num_parcelas}x` },
-                { label: 'Spread total', value: fmt(extracted.spread_total) },
-                { label: 'Modalidade', value: extracted.modalidade },
-              ].map((item) => (
-                <div key={item.label} className={`bg-slate-50 rounded-xl p-3 ${item.full ? 'col-span-2' : ''}`}>
+              {previewFields(extracted).map((item) => (
+                <div key={item.label} className={`bg-slate-50 rounded-xl p-3 ${'full' in item && item.full ? 'col-span-2' : ''}`}>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{item.label}</p>
                   <p className="text-sm font-semibold text-slate-700 mt-0.5 truncate">{item.value || '—'}</p>
                 </div>
               ))}
             </div>
 
-            {extracted.parcelas?.length > 0 && (
+            {/* Tabela de parcelas só no mode contrato */}
+            {mode === 'contrato' && extracted.parcelas?.length > 0 && (
               <div className="bg-slate-50 rounded-xl overflow-hidden">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider px-3 pt-3 pb-2">Parcelas</p>
                 <table className="w-full text-xs">
