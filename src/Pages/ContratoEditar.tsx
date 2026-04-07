@@ -84,13 +84,15 @@ export const ContratoEdit: React.FC = () => {
 
     try {
       const orig = original.current;
+      const diaMudou = clienteId !== null && diaVencimento !== orig.dia_vencimento;
 
-      // 1. Atualiza dia_vencimento no cliente só se mudou
-      if (clienteId && diaVencimento !== orig.dia_vencimento) {
-        await ClienteService.atualizar(clienteId, { dia_vencimento: diaVencimento });
+      // 1. Se mudou o dia de vencimento, chama a rota especializada
+      //    que já atualiza o cliente E todas as parcelas pendentes/atrasadas
+      if (diaMudou) {
+        await ClienteService.atualizarDiaVencimento(clienteId!, diaVencimento);
       }
 
-      // 2. Monta payload só com campos que mudaram
+      // 2. Monta payload do contrato só com campos que mudaram
       const payload: Record<string, any> = {};
 
       if (form.valor_enviado      !== orig.valor_enviado)      payload.valor_enviado      = form.valor_enviado;
@@ -102,18 +104,18 @@ export const ContratoEdit: React.FC = () => {
       if (form.data_inicio        !== orig.data_inicio)        payload.data_inicio        = form.data_inicio || null;
       if (form.ativo              !== orig.ativo)              payload.ativo              = form.ativo;
 
-      // Se mudou dia_vencimento mas não data_inicio, força data_inicio
-      // no payload para o backend saber que precisa regenerar as datas
-      if (diaVencimento !== orig.dia_vencimento && payload.data_inicio === undefined) {
-        payload.data_inicio = form.data_inicio || null;
-      }
-
+      // 3. Se só mudou o dia (sem outros campos de contrato), avisa e sai
       if (Object.keys(payload).length === 0) {
-        alert('Nenhuma alteração detectada.');
-        setLoading(false);
+        if (diaMudou) {
+          alert('✓ Dia de vencimento atualizado! Todas as parcelas pendentes foram ajustadas.');
+          navigate(-1);
+        } else {
+          alert('Nenhuma alteração detectada.');
+        }
         return;
       }
 
+      // 4. Atualiza o contrato (regenera parcelas se necessário)
       const res  = await ContratoService.atualizar(Number(id), payload);
       const resp = res.data;
 
@@ -121,7 +123,7 @@ export const ContratoEdit: React.FC = () => {
         ? `✓ Contrato atualizado!\n${resp.parcelas_regeneradas} parcela(s) recriada(s).\n${resp.parcelas_pagas_preservadas} paga(s) preservada(s).`
         : '✓ Contrato atualizado com sucesso!';
 
-      alert(msg);
+      alert(diaMudou ? `✓ Dia de vencimento atualizado!\n${msg}` : msg);
       navigate(-1);
     } catch (err: any) {
       const detail = err.response?.data?.detail;
@@ -188,6 +190,7 @@ export const ContratoEdit: React.FC = () => {
           <div>
             <h3 className="text-sm font-black text-amber-800 uppercase tracking-wider">Atenção</h3>
             <p className="text-sm text-amber-700 mt-1">
+              Alterar o <strong>dia de vencimento</strong> atualiza o dia em todas as parcelas pendentes/atrasadas.
               Alterar <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,{' '}
               <strong>data de início</strong> ou <strong>spread</strong> irá deletar e recriar
               todas as parcelas <strong>pendentes</strong> e <strong>atrasadas</strong>.
@@ -215,7 +218,7 @@ export const ContratoEdit: React.FC = () => {
                 className={inputCls}
               />
               <p className="text-xs text-slate-400 mt-2">
-                Campo salvo no cadastro do cliente — afeta o recálculo das datas de vencimento.
+                Alterar este campo atualiza o dia em <strong>todas as parcelas pendentes e atrasadas</strong> do cliente.
               </p>
             </div>
           </div>

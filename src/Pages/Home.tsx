@@ -1,66 +1,60 @@
-import React, { useEffect, useState, useMemo } from 'react'; // Adicionado useMemo
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, 
-  Wallet, 
-  AlertCircle, 
-  TrendingUp,
-  Plus, 
-  Search, 
-  ChevronRight,
-  Filter // Ícone novo
+  Users, Wallet, AlertCircle, TrendingUp,
+  Plus, Search, ChevronRight, Filter
 } from 'lucide-react';
 import { ClienteService, DashboardService } from '../api/api';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 export const PaginaPrincipal: React.FC = () => {
   const navigate = useNavigate();
   const [clientes, setClientes] = useState<any[]>([]);
   const [resumo, setResumo] = useState<any>(null);
+  const [evolucao, setEvolucao] = useState<any[]>([]); // NOVO
   const [busca, setBusca] = useState<string>(() => 
     localStorage.getItem('filtro_busca') || ''
   );
-
   const [modalidadeFiltro, setModalidadeFiltro] = useState<string>(() => 
     localStorage.getItem('filtro_modalidade') || 'TODAS'
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [processandoId, setProcessandoId] = useState<number | null>(null);
 
-
-
-  // Extrair modalidades únicas para o select
   const modalidadesDisponiveis = useMemo(() => {
     const mods = clientes.map(c => c.modalidade).filter(Boolean);
     return ['TODAS', ...Array.from(new Set(mods))];
   }, [clientes]);
 
-  // Lógica de filtragem combinada
   const clientesFiltrados = useMemo(() => {
     return clientes.filter(cliente => {
-     const correspondeBusca =
-          cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
-          (cliente.cpf_cnpj && cliente.cpf_cnpj.includes(busca));
-
+      const correspondeBusca =
+        cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        (cliente.cpf_cnpj && cliente.cpf_cnpj.includes(busca));
       const correspondeModalidade = modalidadeFiltro === 'TODAS' || cliente.modalidade === modalidadeFiltro;
-      
       return correspondeBusca && correspondeModalidade;
     });
   }, [clientes, busca, modalidadeFiltro]);
 
   const formatarMoeda = (valor: number) =>
-    new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor || 0);
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+
+  // NOVO: formatador curto para o eixo Y do gráfico
+  const formatarMoedaCurta = (valor: number) => {
+    if (valor >= 1000000) return `R$ ${(valor / 1000000).toFixed(1)}M`;
+    if (valor >= 1000) return `R$ ${(valor / 1000).toFixed(0)}k`;
+    return `R$ ${valor}`;
+  };
 
   const toggleStatus = async (id: number, statusAtual: boolean) => {
     setProcessandoId(id);
     try {
       await ClienteService.atualizarStatus(id, !statusAtual);
-      setClientes(prev =>
-        prev.map(c => c.id === id ? { ...c, ativo: !statusAtual } : c)
-      );
+      setClientes(prev => prev.map(c => c.id === id ? { ...c, ativo: !statusAtual } : c));
     } catch (error) {
       console.error("Erro ao mudar status:", error);
       alert("Não foi possível atualizar o status.");
@@ -69,12 +63,13 @@ export const PaginaPrincipal: React.FC = () => {
     }
   };
 
-  const carregarDados = async (termoDeBusca: string = '') => {
+  const carregarDados = async () => {
     setLoading(true);
     try {
-      const [clientesRes, resumoRes] = await Promise.all([
-        ClienteService.listar(termoDeBusca), 
-        DashboardService.resumoGeral()
+      const [clientesRes, resumoRes, evolucaoRes] = await Promise.all([
+        ClienteService.listar(),
+        DashboardService.resumoGeral(),
+        DashboardService.evolucaoMensal() // NOVO
       ]);
 
       const listaOrdenada = clientesRes.data.sort((a: any, b: any) => {
@@ -84,6 +79,7 @@ export const PaginaPrincipal: React.FC = () => {
 
       setClientes(listaOrdenada);
       setResumo(resumoRes.data);
+      setEvolucao(evolucaoRes.data); // NOVO
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -92,123 +88,123 @@ export const PaginaPrincipal: React.FC = () => {
   };
 
   const formatarcpfCnpj = (valor: string | null) => {
-    if (!valor) return ""; 
+    if (!valor) return "";
     const raw = valor.replace(/\D/g, '');
     if (raw.length <= 11) {
       return raw.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     }
     return raw.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2').substring(0, 18);
-  }
+  };
 
   const FormatPhone = (value: number | string | null) => {
     if (!value) return "";
     const raw = value.toString().replace(/\D/g, '');
-    if (raw.length <= 10) {
-      return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
-    }
-    return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 15); 
+    if (raw.length <= 10) return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+    return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 15);
   };
-  
-  useEffect(() => {
-    carregarDados();
-  }, []);
 
+  useEffect(() => { carregarDados(); }, []);
+  useEffect(() => { localStorage.setItem('filtro_busca', busca); }, [busca]);
+  useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }, [modalidadeFiltro]);
 
-  useEffect(() => {
-  localStorage.setItem('filtro_busca', busca);
-}, [busca]);
-
-useEffect(() => {
-  localStorage.setItem('filtro_modalidade', modalidadeFiltro);
-}, [modalidadeFiltro]);
-
+  // NOVO: formata os dados do gráfico
+  const dadosGrafico = useMemo(() => {
+    return evolucao.map((item) => ({
+      mes: item.mes,
+      Montante: parseFloat(item.montante_mensal) || 0,
+      Spread: parseFloat(item.spread_mensal) || 0,
+      Inadimplência: parseFloat(item.inadimplencia_mensal) || 0,
+    }));
+  }, [evolucao]);
 
   return (
-    
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
       <div className="max-w-[1400px] mx-auto px-4 py-8">
 
         {/* HEADER */}
-          <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Metropolitan <span className="text-indigo-600">Cobranças</span>
             </h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">
-              Visão geral da sua carteira de recebíveis.
-            </p>
+            <p className="text-slate-500 text-sm mt-1 font-medium">Visão geral da sua carteira de recebíveis.</p>
           </div>
           <button
             onClick={() => navigate('/clientes/novo')}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-all"
           >
-            <Plus size={18} />
-            Novo Cliente
+            <Plus size={18} /> Novo Cliente
           </button>
-              <button
+          <button
             onClick={() => navigate('/baixa-repasse')}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-all"
           >
-            <Plus size={18} />
-           Dar Baixa
+            <Plus size={18} /> Dar Baixa
           </button>
         </header>
 
-        {/* DASHBOARD */}
+        {/* DASHBOARD CARDS */}
         {resumo && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-
-            {/* Clientes */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-2xl border shadow-sm">
               <div className="flex justify-between mb-4">
                 <Users size={20} className="text-indigo-600" />
                 <span className="text-xs font-bold text-indigo-600">GERAL</span>
               </div>
               <p className="text-sm text-slate-500">Total de Clientes</p>
-              <h3 className="text-3xl font-bold">
-                {resumo.carteira.total_clientes}
-              </h3>
+              <h3 className="text-3xl font-bold">{resumo.carteira.total_clientes}</h3>
             </div>
 
-            {/* Montante */}
             <div className="bg-white p-6 rounded-2xl border shadow-sm">
               <div className="flex justify-between mb-4">
                 <Wallet size={20} className="text-emerald-600" />
                 <span className="text-xs font-bold text-emerald-600">CARTEIRA</span>
               </div>
               <p className="text-sm text-slate-500">Montante Total</p>
-              <h3 className="text-3xl font-bold">
-                {formatarMoeda(resumo.carteira.montante_total_carteira)}
-              </h3>
+              <h3 className="text-3xl font-bold">{formatarMoeda(resumo.carteira.montante_total_recebido)}</h3>
             </div>
 
-            {/* Spread Total */}
             <div className="bg-white p-6 rounded-2xl border shadow-sm">
               <div className="flex justify-between mb-4">
                 <TrendingUp size={20} className="text-indigo-600" />
                 <span className="text-xs font-bold text-indigo-600">SPREAD</span>
               </div>
               <p className="text-sm text-slate-500">Spread Total da Carteira</p>
-              <h3 className="text-3xl font-bold text-indigo-600">
-                {formatarMoeda(resumo.carteira.spread_total_carteira)}
-              </h3>
+              <h3 className="text-3xl font-bold text-indigo-600">{formatarMoeda(resumo.carteira.spread_total_carteira)}</h3>
             </div>
 
-            {/* Inadimplência */}
             <div className="bg-white p-6 rounded-2xl border shadow-sm">
               <div className="flex justify-between mb-4">
                 <AlertCircle size={20} className="text-rose-600" />
                 <span className="text-xs font-bold text-rose-600">RISCO</span>
               </div>
               <p className="text-sm text-slate-500">Inadimplência Total</p>
-              <h3 className="text-3xl font-bold text-rose-600">
-                {formatarMoeda(resumo.inadimplencia.total_em_atraso)}
-              </h3>
+              <h3 className="text-3xl font-bold text-rose-600">{formatarMoeda(resumo.inadimplencia.total_em_atraso)}</h3>
             </div>
-
           </div>
         )}
 
+        {/* GRÁFICO DE EVOLUÇÃO MENSAL - NOVO */}
+        {dadosGrafico.length > 0 && (
+          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 mb-10">
+            <h2 className="text-lg font-bold text-slate-800 mb-6">Evolução Mensal</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dadosGrafico} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis tickFormatter={formatarMoedaCurta} tick={{ fontSize: 11, fill: '#94a3b8' }} width={80} />
+                <Tooltip
+                  
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '16px' }} />
+                <Line type="monotone" dataKey="Montante" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="Spread" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="Inadimplência" stroke="#f43f5e" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
        
         {/* TABELA DE CLIENTES */}
         <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">

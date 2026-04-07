@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://painelapi.bancometropolitan.com.br';
+const API_URL = 'http://127.0.0.1:8000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -45,6 +45,11 @@ export const ClienteService = {
 atualizarStatus: (id: number, ativo: boolean) =>
     api.patch(`/clientes/${id}`, { ativo }),
 excluir: (id: number) => api.delete(`/clientes/${id}`),
+ atualizarDiaVencimento: (clienteId: number, novoDia: number) =>
+    api.patch(`/clientes/${clienteId}/dia-vencimento`, null, {
+      params: { novo_dia: novoDia },
+    }),
+
 };
 
 // ─────────────── Contratos ───────────────
@@ -55,6 +60,7 @@ export const ContratoService = {
   criar: (dados: any) => api.post('/contratos/', dados),
   atualizar: (id: number, dados: any) => api.patch(`/contratos/${id}`, dados),
   desativar: (id: number) => api.delete(`/contratos/${id}`),
+ 
 };
 
 // ─────────────── Parcelas ───────────────

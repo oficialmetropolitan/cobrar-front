@@ -176,7 +176,8 @@ export const ClienteDetalhes: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {parcelas.map((p) => {
-              const estaVencida = p.status !== 'pago' && p.data_vencimento < hoje;
+              const dataVenc = p.data_vencimento?.split('T')[0] ?? '';
+              const estaVencida = p.status !== 'pago' && dataVenc < hoje;
               const statusFinal = estaVencida ? 'atrasado' : p.status;
 
               return (
