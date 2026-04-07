@@ -6,68 +6,81 @@ import {
 import { ContratoService, ClienteService } from '../api/api';
 
 type ContratoForm = {
-  valor_enviado:      number;
-  montante:           number;
-  valor_parcela:      number;
+  valor_enviado: number;
+  montante: number;
+  valor_parcela: number;
   spread_por_parcela: number;
-  num_parcelas:       number;
-  taxa_mensal:        number;
-  data_inicio:        string;
-  ativo:              boolean;
+  num_parcelas: number;
+  taxa_mensal: number;
+  data_inicio: string;
+  ativo: boolean;
 };
 
 export const ContratoEdit: React.FC = () => {
-  const { id }   = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [loading,  setLoading]  = useState(false);
+  const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [clienteId, setClienteId] = useState<number | null>(null);
+const formatDate = (date: string) => {
+  const [year, month, day] = date.split('-');
+  return `${year}-${month}-${day}T12:00:00`; // meio-dia evita shift de timezone
 
+
+};
   const [form, setForm] = useState<ContratoForm>({
-    valor_enviado:      0,
-    montante:           0,
-    valor_parcela:      0,
+    valor_enviado: 0,
+    montante: 0,
+    valor_parcela: 0,
     spread_por_parcela: 0,
-    num_parcelas:       1,
-    taxa_mensal:        0,
-    data_inicio:        '',
-    ativo:              true,
+    num_parcelas: 1,
+    taxa_mensal: 0,
+    data_inicio: '',
+    ativo: true,
   });
+    const toDateOnly = (iso: string) => {
+  const d = new Date(iso);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-  // Guarda os valores originais para comparar no submit
   const original = useRef<ContratoForm & { dia_vencimento: number } | null>(null);
-  const [diaVencimento, setDiaVencimento] = useState(10);
 
-  // ── Carrega contrato + cliente ─────────────────────────────────
+  // ✅ String — evita bug de captura parcial ao digitar (ex: "20" virar "2")
+  const [diaVencimento, setDiaVencimento] = useState<string>('10');
+
   useEffect(() => {
     const carregar = async () => {
       if (!id) return;
       try {
         setFetching(true);
         const res = await ContratoService.buscarPorId(Number(id));
-        const c   = res.data;
+        const c = res.data;
         setClienteId(c.cliente_id);
 
         const cli = await ClienteService.buscarPorId(c.cliente_id);
         const diaVenc = cli.data.dia_vencimento ?? 10;
-        setDiaVencimento(diaVenc);
+
+        setDiaVencimento(String(diaVenc)); // ✅ string
 
         const valores: ContratoForm = {
-          valor_enviado:      Number(c.valor_enviado)      || 0,
-          montante:           Number(c.montante)           || 0,
-          valor_parcela:      Number(c.valor_parcela)      || 0,
+          valor_enviado: Number(c.valor_enviado) || 0,
+          montante: Number(c.montante) || 0,
+          valor_parcela: Number(c.valor_parcela) || 0,
           spread_por_parcela: Number(c.spread_por_parcela) || 0,
-          num_parcelas:       Number(c.num_parcelas)       || 1,
-          taxa_mensal:        Number(c.taxa_mensal)        || 0,
-          data_inicio:        c.data_inicio ?? '',
-          ativo:              c.ativo !== false,
+          num_parcelas: Number(c.num_parcelas) || 1,
+          taxa_mensal: Number(c.taxa_mensal) || 0,
+          data_inicio: c.data_inicio ? toDateOnly(c.data_inicio) : '',
+          ativo: c.ativo !== false,
         };
 
         setForm(valores);
         original.current = { ...valores, dia_vencimento: diaVenc };
       } catch (err) {
-        console.error('Erro ao carregar contrato:', err);
+        console.error(err);
         alert('Não foi possível carregar o contrato.');
       } finally {
         setFetching(false);
@@ -76,35 +89,43 @@ export const ContratoEdit: React.FC = () => {
     carregar();
   }, [id]);
 
-  // ── Submit — envia APENAS o que mudou ─────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !original.current) return;
-    setLoading(true);
 
+    // ✅ Converte para número só aqui, na hora de usar
+    const diaNum = parseInt(diaVencimento, 10);
+    if (isNaN(diaNum) || diaNum < 1 || diaNum > 28) {
+      alert('Dia de vencimento inválido. Use um valor entre 1 e 28.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const orig = original.current;
-      const diaMudou = clienteId !== null && diaVencimento !== orig.dia_vencimento;
+      const diaMudou = clienteId !== null && diaNum !== orig.dia_vencimento;
 
-      // 1. Se mudou o dia de vencimento, chama a rota especializada
-      //    que já atualiza o cliente E todas as parcelas pendentes/atrasadas
+      console.log('diaVencimento state:', diaVencimento);
+      console.log('orig.dia_vencimento:', orig.dia_vencimento);
+      console.log('diaMudou:', diaMudou);
+
       if (diaMudou) {
-        await ClienteService.atualizarDiaVencimento(clienteId!, diaVencimento);
+        await ClienteService.atualizarDiaVencimento(clienteId!, diaNum);
       }
 
-      // 2. Monta payload do contrato só com campos que mudaram
       const payload: Record<string, any> = {};
 
-      if (form.valor_enviado      !== orig.valor_enviado)      payload.valor_enviado      = form.valor_enviado;
-      if (form.montante           !== orig.montante)           payload.montante           = form.montante;
-      if (form.valor_parcela      !== orig.valor_parcela)      payload.valor_parcela      = form.valor_parcela;
+      if (form.valor_enviado !== orig.valor_enviado) payload.valor_enviado = form.valor_enviado;
+      if (form.montante !== orig.montante) payload.montante = form.montante;
+      if (form.valor_parcela !== orig.valor_parcela) payload.valor_parcela = form.valor_parcela;
       if (form.spread_por_parcela !== orig.spread_por_parcela) payload.spread_por_parcela = form.spread_por_parcela;
-      if (form.num_parcelas       !== orig.num_parcelas)       payload.num_parcelas       = form.num_parcelas;
-      if (form.taxa_mensal        !== orig.taxa_mensal)        payload.taxa_mensal        = form.taxa_mensal;
-      if (form.data_inicio        !== orig.data_inicio)        payload.data_inicio        = form.data_inicio || null;
-      if (form.ativo              !== orig.ativo)              payload.ativo              = form.ativo;
+      if (form.num_parcelas !== orig.num_parcelas) payload.num_parcelas = form.num_parcelas;
+      if (form.taxa_mensal !== orig.taxa_mensal) payload.taxa_mensal = form.taxa_mensal;
+      if (form.data_inicio !== orig.data_inicio) payload.data_inicio = form.data_inicio
+  ? formatDate(form.data_inicio)
+  : null;
+      if (form.ativo !== orig.ativo) payload.ativo = form.ativo;
 
-      // 3. Se só mudou o dia (sem outros campos de contrato), avisa e sai
       if (Object.keys(payload).length === 0) {
         if (diaMudou) {
           alert('✓ Dia de vencimento atualizado! Todas as parcelas pendentes foram ajustadas.');
@@ -115,12 +136,11 @@ export const ContratoEdit: React.FC = () => {
         return;
       }
 
-      // 4. Atualiza o contrato (regenera parcelas se necessário)
-      const res  = await ContratoService.atualizar(Number(id), payload);
+      const res = await ContratoService.atualizar(Number(id), payload);
       const resp = res.data;
 
       const msg = resp.deve_regenerar
-        ? `✓ Contrato atualizado!\n${resp.parcelas_regeneradas} parcela(s) recriada(s).\n${resp.parcelas_pagas_preservadas} paga(s) preservada(s).`
+        ? `✓ Contrato atualizado!\n${resp.parcelas_regeneradas} parcela(s) recriada(s).`
         : '✓ Contrato atualizado com sucesso!';
 
       alert(diaMudou ? `✓ Dia de vencimento atualizado!\n${msg}` : msg);
@@ -133,16 +153,15 @@ export const ContratoEdit: React.FC = () => {
     }
   };
 
-  // ── Atualiza campo e recalcula spread automaticamente ─────────
   const setF = (field: keyof ContratoForm) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
       setForm(prev => {
         const updated = { ...prev, [field]: value };
 
-        const montante     = Number(field === 'montante'      ? value : updated.montante);
+        const montante = Number(field === 'montante' ? value : updated.montante);
         const valorEnviado = Number(field === 'valor_enviado' ? value : updated.valor_enviado);
-        const numParcelas  = Number(field === 'num_parcelas'  ? value : updated.num_parcelas);
+        const numParcelas = Number(field === 'num_parcelas' ? value : updated.num_parcelas);
 
         if (montante > 0 && valorEnviado > 0 && numParcelas > 0) {
           updated.spread_por_parcela = parseFloat(
@@ -182,7 +201,6 @@ export const ContratoEdit: React.FC = () => {
           <p className="text-slate-500 mt-2">Apenas os campos alterados serão enviados ao servidor.</p>
         </header>
 
-        {/* Alerta */}
         <div className="mb-8 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
           <div className="p-2 bg-white rounded-lg text-amber-500 shadow-sm">
             <AlertTriangle size={20} />
@@ -193,8 +211,7 @@ export const ContratoEdit: React.FC = () => {
               Alterar o <strong>dia de vencimento</strong> atualiza o dia em todas as parcelas pendentes/atrasadas.
               Alterar <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,{' '}
               <strong>data de início</strong> ou <strong>spread</strong> irá deletar e recriar
-              todas as parcelas <strong>pendentes</strong> e <strong>atrasadas</strong>.
-              Parcelas <strong>pagas</strong> são sempre preservadas.
+              todas as parcelas. Parcelas <strong>pagas</strong> são sempre preservadas.
             </p>
           </div>
         </div>
@@ -212,9 +229,16 @@ export const ContratoEdit: React.FC = () => {
                 Dia de Vencimento <span className="normal-case font-normal">(1–28)</span>
               </label>
               <input
-                type="number" min="1" max="28" required
+                type="number"
                 value={diaVencimento}
-                onChange={e => setDiaVencimento(Number(e.target.value))}
+                onChange={e => setDiaVencimento(e.target.value)}
+                onBlur={e => {
+                  // ✅ Valida e normaliza só quando o usuário sai do campo
+                  const n = parseInt(e.target.value, 10);
+                  if (isNaN(n) || n < 1) setDiaVencimento('1');
+                  else if (n > 28) setDiaVencimento('28');
+                  else setDiaVencimento(String(n));
+                }}
                 className={inputCls}
               />
               <p className="text-xs text-slate-400 mt-2">
