@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://painel.bancometropolitan.com.br';
+const API_URL = 'https://painelapi.bancometropolitan.com.br';
 
 const api = axios.create({
   baseURL: API_URL,
