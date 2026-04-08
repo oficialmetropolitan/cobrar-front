@@ -88,8 +88,21 @@ const statusConfig: Record<string, { label: string; classes: string; icon: React
       ]);
 
       const listaOrdenada = clientesRes.data.sort((a: any, b: any) => {
-        if (a.ativo === b.ativo) return 0;
-        return a.ativo ? -1 : 1;
+        // Criamos pesos: Ativo é o menor número (vai pro topo), 
+        const pesos: Record<string, number> = {
+          'ativo': 1,
+          'negativo': 2,
+          'inativo': 3
+        };
+
+        const pesoA = pesos[a.status] ?? 99;
+        const pesoB = pesos[b.status] ?? 99;
+
+        if (pesoA !== pesoB) {
+          return pesoA - pesoB;
+        }
+        
+        return a.nome.localeCompare(b.nome);
       });
 
       setClientes(listaOrdenada);
