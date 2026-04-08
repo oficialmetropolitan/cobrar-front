@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+//const API_URL = 'https://painelapi.bancometropolitan.com.br';
+
 const API_URL = 'https://painelapi.bancometropolitan.com.br';
 
 const api = axios.create({
@@ -42,8 +44,8 @@ export const ClienteService = {
   desativar: (id: number) => api.delete(`/clientes/${id}`),
   buscarContratos: (id: number) => api.get(`/clientes/${id}/contratos`),
   buscarParcelas: (id: number) => api.get(`/clientes/${id}/parcelas`),
-atualizarStatus: (id: number, ativo: boolean) =>
-    api.patch(`/clientes/${id}`, { ativo }),
+atualizarStatus: (id: number, status: string) =>
+    api.patch(`/clientes/${id}`, { status }),
 excluir: (id: number) => api.delete(`/clientes/${id}`),
  atualizarDiaVencimento: (clienteId: number, novoDia: number) =>
     api.patch(`/clientes/${clienteId}/dia-vencimento`, null, {

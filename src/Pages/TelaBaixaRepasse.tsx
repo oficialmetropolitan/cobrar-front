@@ -67,8 +67,12 @@ export const BaixaRepasse: React.FC = () => {
     setProcessando(true);
 
     try {
-      await ParcelaService.baixar_lote(selecionados);
-      alert('Sucesso: Repasse processado!');
+      // Adicione o 'const res =' aqui para capturar o retorno
+      const res = await ParcelaService.baixar_lote(selecionados); 
+      
+      // Melhore a mensagem usando o total_baixado retornado pelo backend
+      alert(`Sucesso: ${res.data.total_baixado} parcelas processadas com sucesso!`);
+      
       carregarDados();
     } catch {
       alert('Erro ao processar baixa em lote.');

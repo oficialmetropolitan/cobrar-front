@@ -50,18 +50,33 @@ export const PaginaPrincipal: React.FC = () => {
     return `R$ ${valor}`;
   };
 
-  const toggleStatus = async (id: number, statusAtual: boolean) => {
-    setProcessandoId(id);
-    try {
-      await ClienteService.atualizarStatus(id, !statusAtual);
-      setClientes(prev => prev.map(c => c.id === id ? { ...c, ativo: !statusAtual } : c));
-    } catch (error) {
-      console.error("Erro ao mudar status:", error);
-      alert("Não foi possível atualizar o status.");
-    } finally {
-      setProcessandoId(null);
-    }
+  const ciclarStatus = async (id: number, statusAtual: string) => {
+  const ciclo: Record<string, string> = {
+    'ativo': 'inativo',
+    'inativo': 'negativo',
+    'negativo': 'ativo',
   };
+  const novoStatus = ciclo[statusAtual] ?? 'ativo';
+  setProcessandoId(id);
+  try {
+    await ClienteService.atualizarStatus(id, novoStatus);
+    setClientes(prev =>
+      prev.map(c => c.id === id ? { ...c, status: novoStatus } : c)
+    );
+  } catch (error) {
+    console.error("Erro ao mudar status:", error);
+    alert("Não foi possível atualizar o status.");
+  } finally {
+    setProcessandoId(null);
+  }
+};
+
+// Config visual para cada status:
+const statusConfig: Record<string, { label: string; classes: string; icon: React.ReactNode }> = {
+  ativo:     { label: 'ativo',     classes: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: <CheckCircle2 size={12} /> },
+  inativo:   { label: 'inativo',   classes: 'bg-slate-100 text-slate-500 border-slate-200',      icon: <XCircle size={12} /> },
+  negativo:  { label: 'negativo',  classes: 'bg-rose-50 text-rose-600 border-rose-100',          icon: <AlertCircle size={12} /> },
+};
 
   const carregarDados = async () => {
     setLoading(true);
@@ -277,15 +292,22 @@ export const PaginaPrincipal: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => toggleStatus(cliente.id, cliente.ativo)}
-                          disabled={processandoId === cliente.id}
-                          className={`relative inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${cliente.ativo ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}
-                        >
-                          {processandoId === cliente.id ? <Loader2 size={12} className="animate-spin" /> : (cliente.ativo ? <CheckCircle2 size={12} /> : <XCircle size={12} />)}
-                          {cliente.ativo ? 'ATIVO' : 'INATIVO'}
-                        </button>
-                      </td>
+                            {(() => {
+                              const cfg = statusConfig[cliente.status] ?? statusConfig['inativo'];
+                              return (
+                                <button
+                                  onClick={() => ciclarStatus(cliente.id, cliente.status)}
+                                  disabled={processandoId === cliente.id}
+                                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${cfg.classes}`}
+                                >
+                                  {processandoId === cliente.id
+                                    ? <Loader2 size={12} className="animate-spin" />
+                                    : cfg.icon}
+                                  {cfg.label}
+                                </button>
+                              );
+                            })()}
+                          </td>
                       <td className="px-6 py-4 text-right">
                         <button onClick={() => navigate(`/clientes/${cliente.id}`)} className="p-2 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
                           <ChevronRight size={18} />

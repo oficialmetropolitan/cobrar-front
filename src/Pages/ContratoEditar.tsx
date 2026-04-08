@@ -47,6 +47,7 @@ const formatDate = (date: string) => {
   return `${year}-${month}-${day}`;
 };
 
+
   const original = useRef<ContratoForm & { dia_vencimento: number } | null>(null);
 
   // ✅ String — evita bug de captura parcial ao digitar (ex: "20" virar "2")
