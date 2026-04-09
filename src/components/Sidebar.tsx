@@ -7,7 +7,6 @@ export function Sidebar() {
 
   const menuItems = [
     { name: 'Dashboard', icon: Home, path: '/dashboard' },
-    { name: 'Contratos', icon: FileText, path: '/contratos' },
     { name: 'Relatórios', icon: TrendingUp, path: '/relatorios' },
     {name: 'Adiantamentos', icon: Calendar, path: '/adiantamentos'},
     {name: 'Clientes', icon: Users, path: '/' },
