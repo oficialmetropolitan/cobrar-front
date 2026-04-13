@@ -134,7 +134,17 @@ export const BaixaRepasse: React.FC = () => {
                   <option value="IPD">IPD</option>
                   <option value="HRSM">Hospital Regional</option>
                   <option value="LAB FROTA">Laboratório Frota</option>
-                  {/* ... demais opções */}
+                  <option value="clinica_fort">Clínica Fort</option>
+                  <option value="D-RADIO">D-Radio</option>
+                  <option value="IPECONT">IPECONT</option>
+                  <option value="INOVACON">Inovacon</option>
+                  <option value="VITRA">Vitra</option>
+                  <option value="WIZZER">Wizzer</option>
+                  <option value="PJ">PJ</option>
+                  <option value="PF">PF</option>
+                  <option value="coletek">coletek</option>
+                  <option value="MAQUININHA">MAQUININHA</option>
+              
                 </select>
               </div>
             </div>
