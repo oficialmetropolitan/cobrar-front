@@ -89,7 +89,22 @@ export const ClienteForm: React.FC = () => {
     setErrors({});
   };
 
+// ─── Helpers Adicionais ────────────────────────────────────────────────────────
+
+function preparePhoneForDB(phone: string): string | undefined {
+  if (!phone) return undefined;
+
+  let raw = phone.replace(/\D/g, '');
+
+  if (raw.length === 10 || raw.length === 11) {
+    raw = '55' + raw;
+  }
+
+  return `+${raw}`;
+}
+
   // ── Validação ─────────────────────────────────────────────────────────────
+
 
   function validate(): boolean {
     const e: Partial<Record<keyof FormData, string>> = {};
@@ -107,11 +122,20 @@ export const ClienteForm: React.FC = () => {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
+if (name === 'telefone') {
+    const formatted = value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .substring(0, 15);
+    setFormData(prev => ({ ...prev, [name]: formatted }));
+  } else {
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name as keyof FormData])
-      setErrors(prev => ({ ...prev, [name]: undefined }));
   }
 
+  if (errors[name as keyof FormData])
+    setErrors(prev => ({ ...prev, [name]: undefined }));
+}
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
@@ -123,7 +147,7 @@ export const ClienteForm: React.FC = () => {
         nome: formData.nome.trim(),
         modalidade: formData.modalidade,
         dia_vencimento: Number(formData.dia_vencimento),
-        telefone: formData.telefone || undefined,
+        telefone: preparePhoneForDB(formData.telefone),
         email: formData.email || undefined,
         cpf_cnpj: formData.cpf_cnpj || undefined,
         valor_enviado: valorEnviado,

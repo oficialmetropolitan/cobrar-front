@@ -124,18 +124,27 @@ const statusConfig: Record<string, { label: string; classes: string; icon: React
     return raw.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2').substring(0, 18);
   };
 
-  const FormatPhone = (value: number | string | null) => {
-    if (!value) return "";
-    const raw = value.toString().replace(/\D/g, '');
-    if (raw.length <= 10) return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
-    return raw.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 15);
-  };
+const FormatPhone = (value: number | string | null) => {
+  if (!value) return "";
+  let raw = value.toString().replace(/\D/g, '');
+  if (raw.length === 10 || raw.length === 11) {
+    raw = "55" + raw;
+  }
+  if (raw.length === 12) {
+    return raw.replace(/^(\d{2})(\d{2})(\d{4})(\d{4})/, '+$1 $2 $3-$4');
+  } 
+  if (raw.length >= 13) {
+    return raw.replace(/^(\d{2})(\d{2})(\d{5})(\d{4}).*/, '+$1 $2 $3-$4').substring(0, 17);
+  }
+  return raw;
+};
 
-  useEffect(() => { carregarDados(); }, []);
-  useEffect(() => { localStorage.setItem('filtro_busca', busca); }, [busca]);
-  useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }, [modalidadeFiltro]);
 
-  // NOVO: formata os dados do gráfico
+useEffect(() => { carregarDados(); }, []);
+useEffect(() => { localStorage.setItem('filtro_busca', busca); }, [busca]);
+useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }, [modalidadeFiltro]);
+
+ 
   const dadosGrafico = useMemo(() => {
     return evolucao.map((item) => ({
       mes: item.mes,
