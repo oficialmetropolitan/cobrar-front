@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Users, Wallet, TrendingUp, AlertCircle, 
-  Calendar, ArrowRight, BarChart3, Building2 
+  Calendar, ArrowRight, BarChart3, Building2, Banknote
 } from 'lucide-react';
-import { DashboardService } from '../api/api';
+import { DashboardService, AdiantamentoService } from '../api/api';
 
 export const PaginaResumo: React.FC = () => {
   const [resumo, setResumo] = useState<any>(null);
   const [modalidades, setModalidades] = useState<any[]>([]);
   const [vencimentos, setVencimentos] = useState<any[]>([]);
+  const [adiantamentos, setAdiantamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const formatarMoeda = (v: number) => 
@@ -17,14 +18,16 @@ export const PaginaResumo: React.FC = () => {
   const carregarDashboard = async () => {
     setLoading(true);
     try {
-      const [res, mod, ven] = await Promise.all([
+      const [res, mod, ven, adv] = await Promise.all([
         DashboardService.resumoGeral(),
         DashboardService.porModalidade(),
-        DashboardService.vencimentosProximos(7)
+        DashboardService.vencimentosProximos(7),
+        AdiantamentoService.resumo()
       ]);
       setResumo(res.data);
       setModalidades(mod.data);
       setVencimentos(ven.data);
+      setAdiantamentos(adv.data);
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
     } finally {
@@ -35,6 +38,10 @@ export const PaginaResumo: React.FC = () => {
   useEffect(() => { carregarDashboard(); }, []);
 
   if (loading) return <div className="p-20 text-center font-bold text-slate-400">Sincronizando Metropolitan...</div>;
+
+  const adiantamentoPendente = adiantamentos.find((a: any) => a.status === 'pendente');
+  const totalAdiantamentoPendente = adiantamentoPendente ? adiantamentoPendente.total_a_receber : 0;
+  const qtdAdiantamentoPendente = adiantamentoPendente ? adiantamentoPendente.quantidade : 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-8 space-y-8 font-sans">
@@ -53,7 +60,7 @@ export const PaginaResumo: React.FC = () => {
       </header>
 
       {/* 1. CARDS PRINCIPAIS (Resumo Geral) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <CardResumo 
           titulo="Total na Carteira" 
           valor={formatarMoeda(resumo.carteira.montante_total_carteira)} 
@@ -67,16 +74,22 @@ export const PaginaResumo: React.FC = () => {
           cor="bg-emerald-500" icon={<TrendingUp size={24}/>} 
         />
         <CardResumo 
-          titulo="Receita Mensal Esperada" 
+          titulo="Receita Mensal" 
           valor={formatarMoeda(resumo.carteira.receita_mensal_esperada)} 
-          sub="Baseado nas parcelas do mês" 
+          sub="Baseado nas parcelas" 
           cor="bg-blue-500" icon={<BarChart3 size={24}/>} 
         />
         <CardResumo 
           titulo="Total em Atraso" 
           valor={formatarMoeda(resumo.inadimplencia.total_em_atraso)} 
-          sub={`${resumo.inadimplencia.clientes_inadimplentes} clientes pendentes`} 
+          sub={`${resumo.inadimplencia.clientes_inadimplentes} pendentes`} 
           cor="bg-rose-500" icon={<AlertCircle size={24}/>} 
+        />
+        <CardResumo 
+          titulo="Adiantamentos" 
+          valor={formatarMoeda(totalAdiantamentoPendente)} 
+          sub={`${qtdAdiantamentoPendente} pendentes a receber`} 
+          cor="bg-amber-500" icon={<Banknote size={24}/>} 
         />
       </div>
 

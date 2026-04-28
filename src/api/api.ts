@@ -1,11 +1,14 @@
+/// <reference types="vite/client" />
 import axios from 'axios';
-
-//const API_URL = 'https://painelapi.bancometropolitan.com.br';
 
 const API_URL = 'https://painelapi.bancometropolitan.com.br';
 
+
 const api = axios.create({
   baseURL: API_URL,
+  headers: {
+    'x-api-key': import.meta.env.VITE_API_KEY
+  }
 });
 
 
