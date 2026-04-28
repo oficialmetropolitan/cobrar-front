@@ -1,229 +1,753 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Users, Wallet, TrendingUp, AlertCircle, 
-  Calendar, ArrowRight, BarChart3, Building2, Banknote
+import {
+  Users, Wallet, TrendingUp, AlertCircle,
+  Calendar, BarChart3, Building2, Banknote,
+  CheckCircle, Clock, XCircle, ArrowUpRight,
+  CreditCard, PiggyBank, DollarSign, Activity,
 } from 'lucide-react';
-import { DashboardService, AdiantamentoService } from '../api/api';
+import { DashboardService } from '../api/api';
 
-export const PaginaResumo: React.FC = () => {
-  const [resumo, setResumo] = useState<any>(null);
-  const [modalidades, setModalidades] = useState<any[]>([]);
-  const [vencimentos, setVencimentos] = useState<any[]>([]);
-  const [adiantamentos, setAdiantamentos] = useState<any[]>([]);
-  const [relatorioConsolidado, setRelatorioConsolidado] = useState<any>(null);
-  const [previsao, setPrevisao] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+/* ─── helpers ──────────────────────────────────────────────────── */
+const moeda = (v: number | null | undefined) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
 
-  const formatarMoeda = (v: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const fmtData = (d: string) =>
+  new Date(d + 'T00:00:00').toLocaleDateString('pt-BR');
 
-  const carregarDashboard = async () => {
-    setLoading(true);
-    try {
-      const [res, mod, ven, adv, cons, prev] = await Promise.all([
-        DashboardService.resumoGeral(),
-        DashboardService.porModalidade(),
-        DashboardService.vencimentosProximos(7),
-        AdiantamentoService.resumo(),
-        DashboardService.relatorioConsolidado(),
-        DashboardService.previsaoRecebimentos()
-      ]);
-      setResumo(res.data);
-      setModalidades(mod.data);
-      setVencimentos(ven.data);
-      setAdiantamentos(adv.data);
-      setRelatorioConsolidado(cons.data);
-      setPrevisao(prev.data);
-    } catch (error) {
-      console.error("Erro ao carregar dashboard:", error);
-    } finally {
-      setLoading(false);
-    }
+/* ─── tipos ────────────────────────────────────────────────────── */
+interface Resumo {
+  carteira: {
+    total_clientes: number;
+    total_contratos: number;
+    capital_total_emprestado: number;
+    montante_total_recebido: number;
+    receita_mensal_esperada: number;
+    spread_total_carteira: number;
   };
+  parcelas_por_status: { status: string; qtd: number; total_valor: number }[];
+  inadimplencia: { clientes_inadimplentes: number; total_em_atraso: number };
+  adiantamentos: {
+    por_status: {
+      status: string;
+      quantidade: number;
+      total_enviado: number;
+      total_a_receber: number;
+      total_spread: number;
+    }[];
+    totais: {
+      quantidade: number;
+      total_enviado: number;
+      total_a_receber: number;
+      total_spread: number;
+    };
+  };
+}
 
-  useEffect(() => { carregarDashboard(); }, []);
+interface Modalidade {
+  modalidade: string;
+  clientes: number;
+  capital_emprestado: number;
+  receita_mensal: number;
+  parcelas_atrasadas: number;
+  valor_em_atraso: number;
+}
 
-  if (loading) return <div className="p-20 text-center font-bold text-slate-400">Sincronizando Metropolitan...</div>;
+interface Vencimento {
+  nome: string;
+  modalidade: string;
+  telefone: string;
+  data_vencimento: string;
+  numero_parcela: number;
+  total_parcelas: number;
+  valor: number;
+  status: 'pendente' | 'atrasado';
+}
 
-  const adiantamentoPendente = adiantamentos.find((a: any) => a.status === 'pendente');
-  const totalAdiantamentoPendente = adiantamentoPendente ? adiantamentoPendente.total_a_receber : 0;
-  const qtdAdiantamentoPendente = adiantamentoPendente ? adiantamentoPendente.quantidade : 0;
+interface Previsao {
+  em_90_dias: number;
+  em_180_dias: number;
+  em_1_ano: number;
+  em_2_anos: number;
+}
+
+interface Consolidado {
+  detalhes: {
+    spread_realizado_parcelas: number;
+    adiantamentos_recebidos: { quantidade: number; total_enviado: number; total_receber: number; spread_adiantamento: number };
+    adiantamentos_pendentes: { quantidade: number; total_enviado: number; total_receber: number; spread_adiantamento: number };
+    capital_emprestado_carteira: number;
+    total_recebido_parcelas: number;
+    total_recebido_adiantamentos: number;
+  };
+  consolidado: {
+    spread_total: number;
+    total_recebido_geral: number;
+    total_recebivel: number;
+    total_recebivel_parcelas: number;
+    total_recebivel_adiant: number;
+  };
+}
+
+/* ─── styles ───────────────────────────────────────────────────── */
+const styles = `
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+  .dash-root {
+    min-height: 100vh;
+    background: #F2F4F8;
+    font-family: 'DM Sans', sans-serif;
+    color: #1A2340;
+    padding: 2.5rem 2.5rem 4rem;
+  }
+
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #DDE1EC;
+  }
+
+  .dash-title {
+    font-family: 'Roboto', serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0F1729;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.25rem;
+    line-height: 1.1;
+  }
+
+  .dash-title span {
+    color: #4F63D2;
+  }
+
+  .dash-subtitle {
+    font-size: 0.8rem;
+    color: #8A96B4;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+
+  .dash-badge {
+    background: #fff;
+    border: 1px solid #DDE1EC;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #8A96B4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* SECTION */
+  .dash-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .dash-section-label {
+    font-family: 'Roboto', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #3f517cff;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .dash-section-label::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: #C8CEDF;
+  }
+
+  /* CARDS GRID */
+  .cards-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: #DDE1EC;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #DDE1EC;
+  }
+
+  .cards-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #DDE1EC;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #DDE1EC;
+  }
+
+  .cards-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #DDE1EC;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #DDE1EC;
+  }
+
+  /* HERO CARD ROW */
+  .hero-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-card {
+    background: #fff;
+    border: 1px solid #DDE1EC;
+    border-radius: 16px;
+    padding: 1.5rem 1.6rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .hero-card:hover {
+    border-color: #B8C0D8;
+    box-shadow: 0 4px 20px rgba(79,99,210,0.06);
+  }
+
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    opacity: 0.06;
+    transform: translate(35%, -35%);
+  }
+
+  .hero-card.emerald::before { background: #059669; }
+  .hero-card.violet::before  { background: #4F63D2; }
+  .hero-card.amber::before   { background: #D97706; }
+
+  .hero-card-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-card-icon.emerald { background: #D1FAE5; color: #059669; }
+  .hero-card-icon.violet  { background: #E0E4FA; color: #4F63D2; }
+  .hero-card-icon.amber   { background: #FEF3C7; color: #D97706; }
+
+  .hero-card-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #A0ABCA;
+    margin-bottom: 0.3rem;
+  }
+
+  .hero-card-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0F1729;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-card-sub {
+    font-size: 0.7rem;
+    color: #B0BBCC;
+    margin-top: 0.3rem;
+  }
+
+  /* METRIC CELL */
+  .metric-cell {
+    background: #fff;
+    padding: 1.25rem 1.4rem;
+    transition: background 0.15s;
+  }
+
+  .metric-cell:hover { background: #FAFBFF; }
+
+  .metric-cell-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+
+  .metric-cell-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #A0ABCA;
+    margin-bottom: 0.3rem;
+    line-height: 1.3;
+  }
+
+  .metric-cell-value {
+    font-family: 'Roboto', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1A2340;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .metric-cell-sub {
+    font-size: 0.6rem;
+    color: #C0C8D8;
+    margin-top: 0.2rem;
+  }
+
+  /* COLOR VARIANTS FOR METRIC CELLS */
+  .mc-indigo .metric-cell-icon  { background: #EEF0FC; color: #4F63D2; }
+  .mc-emerald .metric-cell-icon { background: #D1FAE5; color: #059669; }
+  .mc-blue .metric-cell-icon    { background: #DBEAFE; color: #2563EB; }
+  .mc-violet .metric-cell-icon  { background: #EDE9FE; color: #7C3AED; }
+  .mc-sky .metric-cell-icon     { background: #E0F2FE; color: #0284C7; }
+  .mc-rose .metric-cell-icon    { background: #FFE4E6; color: #E11D48; }
+  .mc-amber .metric-cell-icon   { background: #FEF3C7; color: #D97706; }
+  .mc-slate .metric-cell-icon   { background: #F1F5F9; color: #64748B; }
+  .mc-fuchsia .metric-cell-icon { background: #FAE8FF; color: #A21CAF; }
+
+  /* STATUS PILLS */
+  .pill {
+    display: inline-block;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 99px;
+  }
+
+  .pill-rose  { background: #FFE4E6; color: #BE123C; border: 1px solid #FECDD3; }
+  .pill-amber { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+  /* TABLE */
+  .dash-table-wrap {
+    border-radius: 16px;
+    border: 1px solid #DDE1EC;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .dash-table thead tr {
+    background: #F8F9FC;
+    border-bottom: 1px solid #DDE1EC;
+  }
+
+  .dash-table thead th {
+    padding: 0.85rem 1.2rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #A0ABCA;
+    text-align: left;
+  }
+
+  .dash-table thead th.danger { color: #F87171; }
+
+  .dash-table tbody tr {
+    border-bottom: 1px solid #F0F2F8;
+    transition: background 0.12s;
+  }
+
+  .dash-table tbody tr:last-child { border-bottom: none; }
+  .dash-table tbody tr:hover { background: #F8F9FD; }
+
+  .dash-table tbody td {
+    padding: 0.85rem 1.2rem;
+    color: #7A88A8;
+  }
+
+  .dash-table tbody td.name  { font-family: 'Roboto', serif; font-weight: 700; color: #2A3660; font-size: 0.78rem; }
+  .dash-table tbody td.money { font-weight: 500; color: #3A4870; }
+  .dash-table tbody td.red   { font-weight: 600; color: #E11D48; }
+
+  /* VENCIMENTOS */
+  .venc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .venc-card {
+    background: #fff;
+    border: 1px solid #DDE1EC;
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .venc-card:hover {
+    border-color: #B8C0D8;
+    box-shadow: 0 2px 12px rgba(79,99,210,0.05);
+  }
+
+  .venc-card.atrasado {
+    border-left: 3px solid #FECDD3;
+  }
+
+  .venc-name {
+    font-family: 'Roboto', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1A2340;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .venc-mod {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #4F63D2;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-top: 2px;
+  }
+
+  .venc-phone {
+    font-size: 0.6rem;
+    color: #B0BBCC;
+    margin-top: 2px;
+  }
+
+  .venc-amount {
+    font-family: 'Roboto', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0F1729;
+    text-align: right;
+  }
+
+  .venc-date {
+    font-size: 0.6rem;
+    font-weight: 500;
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .venc-date.atrasado { color: #E11D48; }
+  .venc-date.pendente { color: #D97706; }
+
+  /* LOADING / ERROR */
+  .dash-loading {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F2F4F8;
+    font-family: 'Roboto', serif;
+    color: #A0ABCA;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+  }
+
+  .dash-error { color: #E11D48; }
+
+  @media (max-width: 1200px) {
+    .cards-grid-6 { grid-template-columns: repeat(3, 1fr); }
+    .hero-cards   { grid-template-columns: repeat(3, 1fr); }
+    .venc-grid    { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 800px) {
+    .dash-root    { padding: 1.5rem; }
+    .cards-grid-6 { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid-3 { grid-template-columns: repeat(1, 1fr); }
+    .hero-cards   { grid-template-columns: repeat(1, 1fr); }
+    .venc-grid    { grid-template-columns: repeat(1, 1fr); }
+    .dash-table-wrap { overflow-x: auto; }
+  }
+`;
+
+/* ─── página ───────────────────────────────────────────────────── */
+export const PaginaResumo: React.FC = () => {
+  const [resumo,      setResumo]      = useState<Resumo | null>(null);
+  const [modalidades, setModalidades] = useState<Modalidade[]>([]);
+  const [vencimentos, setVencimentos] = useState<Vencimento[]>([]);
+  const [previsao,    setPrevisao]    = useState<Previsao | null>(null);
+  const [consolidado, setConsolidado] = useState<Consolidado | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [erro,        setErro]        = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const [res, mod, ven, prev, cons] = await Promise.all([
+          DashboardService.resumoGeral(),
+          DashboardService.porModalidade(),
+          DashboardService.vencimentosProximos(7),
+          DashboardService.previsaoRecebimentos(),
+          DashboardService.relatorioConsolidado(),
+        ]);
+        setResumo(res.data);
+        setModalidades(mod.data);
+        setVencimentos(ven.data);
+        setPrevisao(prev.data);
+        setConsolidado(cons.data);
+      } catch (e) {
+        console.error(e);
+        setErro('Não foi possível carregar o dashboard.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F2F4F8', fontFamily: 'DM Sans, sans-serif', color: '#A0ABCA', fontSize: '0.85rem', letterSpacing: '0.08em' }}>
+      <style>{styles}</style>
+      <span>Carregando dashboard…</span>
+    </div>
+  );
+
+  if (erro || !resumo) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F2F4F8', fontFamily: 'DM Sans, sans-serif', color: '#E11D48', fontSize: '0.85rem' }}>
+      <style>{styles}</style>
+      <span>{erro ?? 'Erro desconhecido.'}</span>
+    </div>
+  );
+
+  const { carteira, inadimplencia, parcelas_por_status, adiantamentos } = resumo;
+
+  const parc = (status: string) => parcelas_por_status.find(p => p.status === status);
+  const adP  = adiantamentos.por_status.find(a => a.status === 'pendente');
+  const adPg = adiantamentos.por_status.find(a => a.status === 'recebido');
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-8 space-y-8 font-sans">
-      
-      {/* HEADER */}
-      <header className="flex justify-between items-end">
+    <div className="dash-root">
+      <style>{styles}</style>
+
+      {/* ── HEADER ─────────────────────────────────────────────────── */}
+      <header className="dash-header">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Dashboard <span className="text-indigo-600">Financeiro</span>
+          <h1 className="dash-title">
+            Dashboard <span>Financeiro</span>
           </h1>
-          <p className="text-slate-500 font-medium">Visão consolidada da carteira e inadimplência.</p>
+          <p className="dash-subtitle">
+            {carteira.total_contratos} contratos ativos · {carteira.total_clientes} clientes
+          </p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-2xl border shadow-sm text-sm font-bold text-slate-600">
-          {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}
+        <div className="dash-badge">
+          {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
         </div>
       </header>
 
-      {/* 1. CARDS PRINCIPAIS (Resumo Geral) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
-        <CardResumo 
-          titulo="Total na Carteira" 
-          valor={formatarMoeda(resumo.carteira.montante_total_carteira)} 
-          sub={`Em ${resumo.carteira.total_contratos} contratos`} 
-          cor="bg-indigo-600" icon={<Wallet size={24}/>} 
-        />
-        <CardResumo 
-          titulo="Spread Total" 
-          valor={formatarMoeda(resumo.carteira.spread_total_carteira)} 
-          sub="Lucro projetado bruto" 
-          cor="bg-emerald-500" icon={<TrendingUp size={24}/>} 
-        />
-        <CardResumo 
-          titulo="Receita Mensal" 
-          valor={formatarMoeda(resumo.carteira.receita_mensal_esperada)} 
-          sub="Baseado nas parcelas" 
-          cor="bg-blue-500" icon={<BarChart3 size={24}/>} 
-        />
-        <CardResumo 
-          titulo="Total em Atraso" 
-          valor={formatarMoeda(resumo.inadimplencia.total_em_atraso)} 
-          sub={`${resumo.inadimplencia.clientes_inadimplentes} pendentes`} 
-          cor="bg-rose-500" icon={<AlertCircle size={24}/>} 
-        />
-        <CardResumo 
-          titulo="Adiantamentos" 
-          valor={formatarMoeda(totalAdiantamentoPendente)} 
-          sub={`${qtdAdiantamentoPendente} pendentes a receber`} 
-          cor="bg-amber-500" icon={<Banknote size={24}/>} 
-        />
-        {relatorioConsolidado && (
-          <>
-            <CardResumo 
-              titulo="Spread Pago (Consolidado)" 
-              valor={formatarMoeda(relatorioConsolidado.visualizacao_geral_consolidada.soma_spread_pago_total)} 
-              sub="Parcelas pagas + Adiantamentos" 
-              cor="bg-violet-600" icon={<TrendingUp size={24}/>} 
+      {/* ── 4. RELATÓRIO CONSOLIDADO ───────────────────────────────── */}
+      {consolidado && (
+        <Secao titulo="Relatório Total Geral">
+          <div className="hero-cards">
+            <HeroCard
+              titulo="Total Recebido Geral"
+              valor={moeda(consolidado.consolidado.total_recebido_geral)}
+              sub="Parcelas + adiantamentos"
+              variante="emerald"
+              icon={<ArrowUpRight size={16} />}
             />
-            <CardResumo 
-              titulo="Total Geral Recebido" 
-              valor={formatarMoeda(relatorioConsolidado.visualizacao_geral_consolidada.soma_adiantamentos_com_resto)} 
-              sub="Soma dos adiantamentos c/ restante" 
-              cor="bg-emerald-600" icon={<Wallet size={24}/>} 
+            <HeroCard
+              titulo="Spread Total Consolidado"
+              valor={moeda(consolidado.consolidado.spread_total)}
+              sub="Spread parcelas + adiantamentos"
+              variante="violet"
+              icon={<TrendingUp size={16} />}
             />
-          </>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* 2. TABELA POR MODALIDADE (IPD, WIZZER, etc) */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center gap-3">
-            <Building2 className="text-indigo-600" />
-            <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Performance por Modalidade</h2>
+            <HeroCard
+              titulo="Total a Receber"
+              valor={moeda(consolidado.consolidado.total_recebivel)}
+              sub="Parcelas + adiant. pendentes"
+              variante="amber"
+              icon={<DollarSign size={16} />}
+            />
           </div>
-          <table className="w-full text-left text-sm">
+        </Secao>
+      )}
+
+      {/* ── 1. CARTEIRA ATIVA ──────────────────────────────────────── */}
+      <Secao titulo="Clientes PJ · PF e Consignados">
+        <div className="cards-grid-6">
+          <MetricCell titulo="Capital Emprestado"    valor={moeda(carteira.capital_total_emprestado)}   sub={`${carteira.total_contratos} contratos ativos`}    cor="mc-indigo"  icon={<Wallet size={14}/>} />
+          <MetricCell titulo="Montante Recebido"     valor={moeda(carteira.montante_total_recebido)}    sub="Total já recebido"                                  cor="mc-emerald" icon={<PiggyBank size={14}/>} />
+          <MetricCell titulo="Receita Mensal Esp."   valor={moeda(carteira.receita_mensal_esperada)}    sub="Soma das parcelas mensais"                          cor="mc-blue"    icon={<BarChart3 size={14}/>} />
+          <MetricCell titulo="Spread Total Carteira" valor={moeda(carteira.spread_total_carteira)}      sub="Lucro projetado bruto"                              cor="mc-violet"  icon={<TrendingUp size={14}/>} />
+          <MetricCell titulo="Clientes Ativos"       valor={String(carteira.total_clientes)}            sub={`${carteira.total_contratos} contratos`}            cor="mc-sky"     icon={<Users size={14}/>} />
+          <MetricCell titulo="Total em Atraso"       valor={moeda(inadimplencia.total_em_atraso)}       sub={`${inadimplencia.clientes_inadimplentes} inadimp.`} cor="mc-rose"    icon={<AlertCircle size={14}/>} />
+        </div>
+      </Secao>
+
+      {/* ── 2. PARCELAS POR STATUS ─────────────────────────────────── */}
+      <Secao titulo="Parcelas por Status">
+        <div className="cards-grid-3">
+          <MetricCell titulo="Parcelas Pagas"     valor={moeda(parc('pago')?.total_valor)}     sub={`${parc('pago')?.qtd ?? 0} parcelas`}     cor="mc-emerald" icon={<CheckCircle size={14}/>} />
+          <MetricCell titulo="Parcelas Pendentes" valor={moeda(parc('pendente')?.total_valor)} sub={`${parc('pendente')?.qtd ?? 0} parcelas`} cor="mc-amber"   icon={<Clock size={14}/>} />
+          <MetricCell titulo="Parcelas Atrasadas" valor={moeda(parc('atrasado')?.total_valor)} sub={`${parc('atrasado')?.qtd ?? 0} parcelas`} cor="mc-rose"    icon={<XCircle size={14}/>} />
+        </div>
+      </Secao>
+
+      {/* ── 3. ADIANTAMENTOS ───────────────────────────────────────── */}
+      <Secao titulo="Adiantamentos — Totais Gerais">
+        <div className="cards-grid-4">
+          <MetricCell titulo="Total Quantidade"  valor={String(adiantamentos.totais.quantidade)}     sub="Todos os adiantamentos" cor="mc-slate"   icon={<Activity size={14}/>} />
+          <MetricCell titulo="Total Enviado"     valor={moeda(adiantamentos.totais.total_enviado)}   sub="Capital total enviado"  cor="mc-slate"   icon={<DollarSign size={14}/>} />
+          <MetricCell titulo="Total a Receber"   valor={moeda(adiantamentos.totais.total_a_receber)} sub="Total geral a receber"  cor="mc-slate"   icon={<ArrowUpRight size={14}/>} />
+          <MetricCell titulo="Total Spread"      valor={moeda(adiantamentos.totais.total_spread)}    sub="Spread total"           cor="mc-slate"   icon={<TrendingUp size={14}/>} />
+        </div>
+      </Secao>
+
+      <Secao titulo="Adiantamentos — Pendentes">
+        <div className="cards-grid-4">
+          <MetricCell titulo="Quantidade"    valor={String(adP?.quantidade ?? 0)} sub="Adiantamentos pendentes" cor="mc-amber" icon={<Banknote size={14}/>} />
+          <MetricCell titulo="Total Enviado" valor={moeda(adP?.total_enviado)}    sub="Capital enviado"         cor="mc-amber" icon={<DollarSign size={14}/>} />
+          <MetricCell titulo="A Receber"     valor={moeda(adP?.total_a_receber)}  sub="Total a receber"         cor="mc-amber" icon={<ArrowUpRight size={14}/>} />
+          <MetricCell titulo="Spread"        valor={moeda(adP?.total_spread)}     sub="Spread previsto"         cor="mc-amber" icon={<TrendingUp size={14}/>} />
+        </div>
+      </Secao>
+
+      <Secao titulo="Adiantamentos — Recebidos">
+        <div className="cards-grid-4">
+          <MetricCell titulo="Quantidade"     valor={String(adPg?.quantidade ?? 0)} sub="Adiantamentos recebidos" cor="mc-emerald" icon={<Banknote size={14}/>} />
+          <MetricCell titulo="Total Enviado"  valor={moeda(adPg?.total_enviado)}     sub="Capital enviado"         cor="mc-emerald" icon={<DollarSign size={14}/>} />
+          <MetricCell titulo="Total Recebido" valor={moeda(adPg?.total_a_receber)}   sub="Total recebido"          cor="mc-emerald" icon={<ArrowUpRight size={14}/>} />
+          <MetricCell titulo="Spread"         valor={moeda(adPg?.total_spread)}      sub="Spread realizado"        cor="mc-emerald" icon={<TrendingUp size={14}/>} />
+        </div>
+      </Secao>
+
+      {/* ── 5. PREVISÃO DE RECEBIMENTOS ────────────────────────────── */}
+      {previsao && (
+        <Secao titulo="Previsão de Recebimentos">
+          <div className="cards-grid-4">
+            <MetricCell titulo="Em 90 Dias"  valor={moeda(previsao.em_90_dias)}  sub="Parcelas pend./atrasadas" cor="mc-sky"  icon={<Calendar size={14}/>} />
+            <MetricCell titulo="Em 180 Dias" valor={moeda(previsao.em_180_dias)} sub="Parcelas pend./atrasadas" cor="mc-sky"  icon={<Calendar size={14}/>} />
+            <MetricCell titulo="Em 1 Ano"    valor={moeda(previsao.em_1_ano)}    sub="Parcelas pend./atrasadas" cor="mc-blue" icon={<Calendar size={14}/>} />
+            <MetricCell titulo="Em 2 Anos"   valor={moeda(previsao.em_2_anos)}   sub="Parcelas pend./atrasadas" cor="mc-blue" icon={<Calendar size={14}/>} />
+          </div>
+        </Secao>
+      )}
+
+      {/* ── 6. MODALIDADES ─────────────────────────────────────────── */}
+      <Secao titulo="Performance por Modalidade">
+        <div className="dash-table-wrap">
+          <table className="dash-table">
             <thead>
-              <tr className="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
-                <th className="px-6 py-4">MODALIDADE</th>
-                <th className="px-6 py-4">CLIENTES</th>
-                <th className="px-6 py-4">RECEITA MENSAL</th>
-                <th className="px-6 py-4 text-rose-500">EM ATRASO</th>
+              <tr>
+                <th>Modalidade</th>
+                <th>Clientes</th>
+                <th>Capital</th>
+                <th>Receita Mensal</th>
+                <th className="danger">Em Atraso</th>
+                <th className="danger">Parc. Atrasadas</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-              {modalidades.map((m, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-black text-slate-700">{m.modalidade}</td>
-                  <td className="px-6 py-4 font-medium">{m.clientes}</td>
-                  <td className="px-6 py-4 font-bold text-slate-900">{formatarMoeda(m.receita_mensal)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-rose-600 font-bold">{formatarMoeda(m.valor_em_atraso)}</span>
-                      <span className="text-[10px] text-slate-400">{m.parcelas_atrasadas} parcelas</span>
-                    </div>
-                  </td>
+            <tbody>
+              {modalidades.map((m, i) => (
+                <tr key={i}>
+                  <td className="name">{m.modalidade}</td>
+                  <td>{m.clientes}</td>
+                  <td className="money">{moeda(m.capital_emprestado)}</td>
+                  <td className="money">{moeda(m.receita_mensal)}</td>
+                  <td className="red">{moeda(m.valor_em_atraso)}</td>
+                  <td>{m.parcelas_atrasadas}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </Secao>
 
-        {/* COLUNA DA DIREITA: Vencimentos e Previsão */}
-        <div className="space-y-8">
-          {/* 4. PREVISÃO DE RECEBIMENTOS */}
-          {previsao && (
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <TrendingUp className="text-indigo-600" />
-                <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Previsão Recebimentos</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 90 Dias</p>
-                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_90_dias)}</p>
+      {/* ── 7. VENCIMENTOS PRÓXIMOS ────────────────────────────────── */}
+      <Secao titulo="Vencimentos Próximos (7 dias)">
+        {vencimentos.length === 0 ? (
+          <p style={{ color: '#2D3A55', fontSize: '0.8rem', fontStyle: 'italic' }}>
+            Nenhum vencimento nos próximos 7 dias.
+          </p>
+        ) : (
+          <div className="venc-grid">
+            {vencimentos.map((v, i) => (
+              <div key={i} className={`venc-card ${v.status}`}>
+                <div style={{ minWidth: 0 }}>
+                  <p className="venc-name">{v.nome}</p>
+                  <p className="venc-mod">{v.modalidade} · {v.numero_parcela}/{v.total_parcelas}</p>
+                  {v.telefone && <p className="venc-phone">{v.telefone}</p>}
                 </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 180 Dias</p>
-                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_180_dias)}</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 1 Ano</p>
-                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_1_ano)}</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 2 Anos</p>
-                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_2_anos)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          {/* 3. VENCIMENTOS PRÓXIMOS (7 DIAS) */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Calendar className="text-indigo-600" />
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Próximos 7 Dias</h2>
-            </div>
-            <div className="space-y-4">
-              {vencimentos.map((v, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800 leading-tight">{v.nome}</p>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase">{v.modalidade} • PARCELA {v.numero_parcela}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-slate-900">{formatarMoeda(v.valor)}</p>
-                    <p className={`text-[10px] font-bold ${v.status === 'atrasado' ? 'text-rose-500' : 'text-amber-500'}`}>
-                      VENCE {new Date(v.data_vencimento).toLocaleDateString('pt-BR')}
-                    </p>
+                <div style={{ flexShrink: 0 }}>
+                  <p className="venc-amount">{moeda(v.valor)}</p>
+                  <p className={`venc-date ${v.status}`}>{fmtData(v.data_vencimento)}</p>
+                  <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                    <span className={`pill pill-${v.status === 'atrasado' ? 'rose' : 'amber'}`}>
+                      {v.status}
+                    </span>
                   </div>
                 </div>
-              ))}
-              {vencimentos.length === 0 && <p className="text-center py-10 text-slate-400 italic">Nenhum vencimento próximo.</p>}
-            </div>
+              </div>
+            ))}
           </div>
-
-          {/* 4. PREVISÃO DE RECEBIMENTOS */}
-         
-        </div>
-
-      </div>
+        )}
+      </Secao>
     </div>
   );
 };
 
-// Componente Auxiliar para os Cards
-const CardResumo = ({ titulo, valor, sub, cor, icon }: any) => (
-  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
-    <div className={`absolute top-0 right-0 w-24 h-24 ${cor} opacity-5 -mr-8 -mt-8 rounded-full group-hover:scale-110 transition-transform`}></div>
-    <div className="relative z-10">
-      <div className={`p-2 w-10 h-10 rounded-xl mb-4 text-white flex items-center justify-center ${cor}`}>
-        {icon}
-      </div>
-      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">{titulo}</p>
-      <h3 className="text-2xl font-black text-slate-900 my-1">{valor}</h3>
-      <p className="text-xs font-bold text-slate-400">{sub}</p>
-    </div>
+/* ─── sub-componentes ──────────────────────────────────────────── */
+
+const Secao: React.FC<{ titulo: string; children: React.ReactNode }> = ({ titulo, children }) => (
+  <section className="dash-section">
+    <p className="dash-section-label">{titulo}</p>
+    {children}
+  </section>
+);
+
+const HeroCard = ({
+  titulo, valor, sub, variante, icon,
+}: {
+  titulo: string; valor: string; sub: string;
+  variante: 'emerald' | 'violet' | 'amber';
+  icon: React.ReactNode;
+}) => (
+  <div className={`hero-card ${variante}`}>
+    <div className={`hero-card-icon ${variante}`}>{icon}</div>
+    <p className="hero-card-label">{titulo}</p>
+    <p className="hero-card-value">{valor}</p>
+    <p className="hero-card-sub">{sub}</p>
+  </div>
+);
+
+const MetricCell = ({
+  titulo, valor, sub, cor, icon,
+}: {
+  titulo: string; valor: string; sub: string; cor: string; icon: React.ReactNode;
+}) => (
+  <div className={`metric-cell ${cor}`}>
+    <div className="metric-cell-icon">{icon}</div>
+    <p className="metric-cell-label">{titulo}</p>
+    <p className="metric-cell-value">{valor}</p>
+    <p className="metric-cell-sub">{sub}</p>
   </div>
 );
