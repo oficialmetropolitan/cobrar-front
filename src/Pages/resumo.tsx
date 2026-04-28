@@ -10,6 +10,8 @@ export const PaginaResumo: React.FC = () => {
   const [modalidades, setModalidades] = useState<any[]>([]);
   const [vencimentos, setVencimentos] = useState<any[]>([]);
   const [adiantamentos, setAdiantamentos] = useState<any[]>([]);
+  const [relatorioConsolidado, setRelatorioConsolidado] = useState<any>(null);
+  const [previsao, setPrevisao] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const formatarMoeda = (v: number) => 
@@ -18,16 +20,20 @@ export const PaginaResumo: React.FC = () => {
   const carregarDashboard = async () => {
     setLoading(true);
     try {
-      const [res, mod, ven, adv] = await Promise.all([
+      const [res, mod, ven, adv, cons, prev] = await Promise.all([
         DashboardService.resumoGeral(),
         DashboardService.porModalidade(),
         DashboardService.vencimentosProximos(7),
-        AdiantamentoService.resumo()
+        AdiantamentoService.resumo(),
+        DashboardService.relatorioConsolidado(),
+        DashboardService.previsaoRecebimentos()
       ]);
       setResumo(res.data);
       setModalidades(mod.data);
       setVencimentos(ven.data);
       setAdiantamentos(adv.data);
+      setRelatorioConsolidado(cons.data);
+      setPrevisao(prev.data);
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
     } finally {
@@ -60,7 +66,7 @@ export const PaginaResumo: React.FC = () => {
       </header>
 
       {/* 1. CARDS PRINCIPAIS (Resumo Geral) */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
         <CardResumo 
           titulo="Total na Carteira" 
           valor={formatarMoeda(resumo.carteira.montante_total_carteira)} 
@@ -91,6 +97,22 @@ export const PaginaResumo: React.FC = () => {
           sub={`${qtdAdiantamentoPendente} pendentes a receber`} 
           cor="bg-amber-500" icon={<Banknote size={24}/>} 
         />
+        {relatorioConsolidado && (
+          <>
+            <CardResumo 
+              titulo="Spread Pago (Consolidado)" 
+              valor={formatarMoeda(relatorioConsolidado.visualizacao_geral_consolidada.soma_spread_pago_total)} 
+              sub="Parcelas pagas + Adiantamentos" 
+              cor="bg-violet-600" icon={<TrendingUp size={24}/>} 
+            />
+            <CardResumo 
+              titulo="Total Geral Recebido" 
+              valor={formatarMoeda(relatorioConsolidado.visualizacao_geral_consolidada.soma_adiantamentos_com_resto)} 
+              sub="Soma dos adiantamentos c/ restante" 
+              cor="bg-emerald-600" icon={<Wallet size={24}/>} 
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -128,29 +150,62 @@ export const PaginaResumo: React.FC = () => {
           </table>
         </div>
 
-        {/* 3. VENCIMENTOS PRÓXIMOS (7 DIAS) */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Calendar className="text-indigo-600" />
-            <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Próximos 7 Dias</h2>
-          </div>
-          <div className="space-y-4">
-            {vencimentos.map((v, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <div>
-                  <p className="text-sm font-bold text-slate-800 leading-tight">{v.nome}</p>
-                  <p className="text-[10px] font-black text-indigo-500 uppercase">{v.modalidade} • PARCELA {v.numero_parcela}</p>
+        {/* COLUNA DA DIREITA: Vencimentos e Previsão */}
+        <div className="space-y-8">
+          {/* 4. PREVISÃO DE RECEBIMENTOS */}
+          {previsao && (
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <TrendingUp className="text-indigo-600" />
+                <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Previsão Recebimentos</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 90 Dias</p>
+                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_90_dias)}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-black text-slate-900">{formatarMoeda(v.valor)}</p>
-                  <p className={`text-[10px] font-bold ${v.status === 'atrasado' ? 'text-rose-500' : 'text-amber-500'}`}>
-                    VENCE {new Date(v.data_vencimento).toLocaleDateString('pt-BR')}
-                  </p>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 180 Dias</p>
+                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_180_dias)}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 1 Ano</p>
+                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_1_ano)}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Em 2 Anos</p>
+                  <p className="text-sm font-black text-slate-900">{formatarMoeda(previsao.em_2_anos)}</p>
                 </div>
               </div>
-            ))}
-            {vencimentos.length === 0 && <p className="text-center py-10 text-slate-400 italic">Nenhum vencimento próximo.</p>}
+            </div>
+          )}
+          {/* 3. VENCIMENTOS PRÓXIMOS (7 DIAS) */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Calendar className="text-indigo-600" />
+              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Próximos 7 Dias</h2>
+            </div>
+            <div className="space-y-4">
+              {vencimentos.map((v, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 leading-tight">{v.nome}</p>
+                    <p className="text-[10px] font-black text-indigo-500 uppercase">{v.modalidade} • PARCELA {v.numero_parcela}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-slate-900">{formatarMoeda(v.valor)}</p>
+                    <p className={`text-[10px] font-bold ${v.status === 'atrasado' ? 'text-rose-500' : 'text-amber-500'}`}>
+                      VENCE {new Date(v.data_vencimento).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {vencimentos.length === 0 && <p className="text-center py-10 text-slate-400 italic">Nenhum vencimento próximo.</p>}
+            </div>
           </div>
+
+          {/* 4. PREVISÃO DE RECEBIMENTOS */}
+         
         </div>
 
       </div>

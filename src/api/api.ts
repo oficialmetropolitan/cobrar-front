@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 
-const API_URL = 'https://painelapi.bancometropolitan.com.br';
+const API_URL = 'http://127.0.0.1:8000';
 
 
 const api = axios.create({
@@ -109,6 +109,8 @@ export const DashboardService = {
   vencimentosProximos: (dias: number = 7) =>
     api.get('/dashboard/vencimentos-proximos', { params: { dias } }),
   evolucaoMensal: () => api.get('/dashboard/evolucao-mensal'),
+  relatorioConsolidado: () => api.get('/dashboard/relatorio-consolidado'),
+  previsaoRecebimentos: () => api.get('/dashboard/previsao-recebimentos'),
 };
 
 
