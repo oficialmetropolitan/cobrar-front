@@ -90,11 +90,10 @@ interface Consolidado {
 
 /* ─── styles ───────────────────────────────────────────────────── */
 const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
   .dash-root {
     min-height: 100vh;
     background: #F2F4F8;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Arial', sans-serif;
     color: #1A2340;
     padding: 2.5rem 2.5rem 4rem;
   }
@@ -109,7 +108,7 @@ const styles = `
   }
 
   .dash-title {
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     font-size: 2rem;
     font-weight: 800;
     color: #0F1729;
@@ -147,7 +146,7 @@ const styles = `
   }
 
   .dash-section-label {
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -292,13 +291,13 @@ const styles = `
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #A0ABCA;
+    color: #767c8fff;
     margin-bottom: 0.3rem;
     line-height: 1.3;
   }
 
   .metric-cell-value {
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     font-size: 1rem;
     font-weight: 700;
     color: #1A2340;
@@ -381,7 +380,7 @@ const styles = `
     color: #7A88A8;
   }
 
-  .dash-table tbody td.name  { font-family: 'Roboto', serif; font-weight: 700; color: #2A3660; font-size: 0.78rem; }
+  .dash-table tbody td.name  { font-family: 'Arial', serif; font-weight: 700; color: #2A3660; font-size: 0.78rem; }
   .dash-table tbody td.money { font-weight: 500; color: #3A4870; }
   .dash-table tbody td.red   { font-weight: 600; color: #E11D48; }
 
@@ -414,7 +413,7 @@ const styles = `
   }
 
   .venc-name {
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     font-size: 0.78rem;
     font-weight: 700;
     color: #1A2340;
@@ -439,7 +438,7 @@ const styles = `
   }
 
   .venc-amount {
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     font-size: 0.85rem;
     font-weight: 700;
     color: #0F1729;
@@ -463,7 +462,7 @@ const styles = `
     align-items: center;
     justify-content: center;
     background: #F2F4F8;
-    font-family: 'Roboto', serif;
+    font-family: 'Arial', serif;
     color: #A0ABCA;
     font-size: 0.85rem;
     letter-spacing: 0.08em;
@@ -486,6 +485,28 @@ const styles = `
     .venc-grid    { grid-template-columns: repeat(1, 1fr); }
     .dash-table-wrap { overflow-x: auto; }
   }
+
+  /* Dark Mode Overrides */
+  html.dark .dash-root { background: #0B0F19; color: #F1F5F9; }
+  html.dark .dash-header { border-color: rgba(255,255,255,0.1); }
+  html.dark .dash-title { color: #fff; }
+  html.dark .hero-card { background: rgba(30,41,59,0.5); border-color: rgba(255,255,255,0.1); }
+  html.dark .hero-card-value { color: #fff; }
+  html.dark .metric-cell { background: rgba(30,41,59,0.5); }
+  html.dark .metric-cell:hover { background: rgba(51,65,85,0.5); }
+  html.dark .metric-cell-value { color: #fff; }
+  html.dark .cards-grid-6, html.dark .cards-grid-4, html.dark .cards-grid-3 { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.05); }
+  html.dark .dash-badge { background: rgba(30,41,59,0.5); border-color: rgba(255,255,255,0.1); color: #94A3B8; }
+  html.dark .dash-table-wrap { border-color: rgba(255,255,255,0.1); background: transparent; }
+  html.dark .dash-table thead tr { background: rgba(30,41,59,0.8); border-color: rgba(255,255,255,0.1); }
+  html.dark .dash-table tbody tr { border-color: rgba(255,255,255,0.05); }
+  html.dark .dash-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  html.dark .dash-table tbody td.name { color: #fff; }
+  html.dark .dash-table tbody td.money { color: #E2E8F0; }
+  html.dark .venc-card { background: rgba(30,41,59,0.5); border-color: rgba(255,255,255,0.1); }
+  html.dark .venc-card:hover { border-color: rgba(129,140,248,0.3); }
+  html.dark .venc-name, html.dark .venc-amount { color: #fff; }
+  html.dark .dash-loading { background: #0B0F19; color: #fff; }
 `;
 
 /* ─── página ───────────────────────────────────────────────────── */

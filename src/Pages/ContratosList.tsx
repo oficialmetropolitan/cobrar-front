@@ -60,24 +60,24 @@ export const ContratosList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-        <p className="mt-4 text-slate-500 font-medium">Buscando registros...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-200">
+        <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
+        <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium">Buscando registros...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] p-4 md:p-8 font-sans transition-colors duration-200">
       <div className="max-w-[1400px] mx-auto">
         
         {/* HEADER */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              Gestão de <span className="text-indigo-600">Contratos</span>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              Gestão de <span className="text-indigo-600 dark:text-indigo-400">Contratos</span>
             </h1>
-            <p className="text-slate-500 font-medium mt-1">Acompanhamento de desembolsos e montantes.</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Acompanhamento de desembolsos e montantes.</p>
           </div>
           
           <div className="relative w-full md:w-80">
@@ -85,7 +85,7 @@ export const ContratosList: React.FC = () => {
             <input 
               type="text" 
               placeholder="Filtrar por ID..." 
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-white outline-none transition-colors"
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
             />
@@ -93,50 +93,50 @@ export const ContratosList: React.FC = () => {
         </header>
 
         {/* TABELA DE CONTRATOS */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center"><Hash size={14} className="inline mr-1"/> ID</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center"><UserIcon size={14} className="inline mr-1"/> Cliente</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest"><DollarSign size={14} className="inline mr-1"/> Desembolso</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Montante Total</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center"><Layers size={14} className="inline mr-1"/> Parcelas</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center"><Calendar size={14} className="inline mr-1"/> Início</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700/50">
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center"><Hash size={14} className="inline mr-1"/> ID</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center"><UserIcon size={14} className="inline mr-1"/> Cliente</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest"><DollarSign size={14} className="inline mr-1"/> Desembolso</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Montante Total</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center"><Layers size={14} className="inline mr-1"/> Parcelas</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center"><Calendar size={14} className="inline mr-1"/> Início</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {contratosFiltrados.map((contrato) => (
-                  <tr key={contrato.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <tr key={contrato.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/80 transition-colors group">
                     <td className="px-8 py-6 text-center">
-                      <span className="text-sm font-bold text-slate-400">#{contrato.id}</span>
+                      <span className="text-sm font-bold text-slate-400 dark:text-slate-500">#{contrato.id}</span>
                     </td>
                     <td className="px-8 py-6 text-center">
-                      <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-100">
+                      <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold border border-indigo-100 dark:border-indigo-500/20">
                         Cód. {contrato.cliente_id}
                       </span>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-700">{formatarMoeda(contrato.valor_enviado)}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Valor Líquido</span>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">{formatarMoeda(contrato.valor_enviado)}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">Valor Líquido</span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-emerald-600">{formatarMoeda(contrato.montante)}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Valor Final</span>
+                        <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{formatarMoeda(contrato.montante)}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">Valor Final</span>
                       </div>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <div className="flex flex-col items-center">
-                        <span className="text-sm font-bold text-slate-700">{contrato.num_parcelas}x</span>
-                        <span className="text-[10px] text-indigo-400 font-bold uppercase">{formatarMoeda(contrato.valor_parcela)}</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{contrato.num_parcelas}x</span>
+                        <span className="text-[10px] text-indigo-400 dark:text-indigo-500 font-bold uppercase">{formatarMoeda(contrato.valor_parcela)}</span>
                       </div>
                     </td>
                     <td className="px-8 py-6 text-center">
-                      <span className="text-xs font-bold text-slate-500">
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                         {formatarDataLiteral(contrato.data_inicio)}
                       </span>
                     </td>
@@ -146,7 +146,7 @@ export const ContratosList: React.FC = () => {
                 {contratosFiltrados.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center justify-center text-slate-400">
+                      <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
                         <FileText size={48} className="mb-4 opacity-20" />
                         <p className="font-medium italic text-sm">Nenhum contrato ativo encontrado.</p>
                       </div>

@@ -8,6 +8,7 @@ import {
   Adiantamento, ResumoItem, FormState, StatusAdiantamento,
   EMPTY_FORM, fmt, fmtDate, diasRestantes,
 } from '../types/adiantamento';
+import { toast } from 'sonner';
 
 // ─── Constantes de estilo ────────────────────────────────────────────────────
 
@@ -34,32 +35,7 @@ const Badge: React.FC<BadgeProps> = ({ status }) => {
   );
 };
 
-interface ToastProps { msg: string; type: 'ok' | 'error'; onClose: () => void }
-const Toast: React.FC<ToastProps> = ({ msg, type, onClose }) => {
-  useEffect(() => {
-    const t = setTimeout(onClose, 3500);
-    return () => clearTimeout(t);
-  }, [onClose]);
-  return (
-    <div style={{
-      position: 'fixed', bottom: 28, right: 28, zIndex: 9999,
-      background: type === 'error' ? '#fff1f2' : '#f0fdf4',
-      color: type === 'error' ? '#be123c' : '#15803d',
-      border: `1px solid ${type === 'error' ? '#fecdd3' : '#bbf7d0'}`,
-      borderRadius: 14, padding: '14px 20px',
-      fontSize: 14, fontWeight: 600,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
-      display: 'flex', alignItems: 'center', gap: 10,
-      animation: 'slideUp .25s cubic-bezier(.34,1.56,.64,1)',
-    }}>
-      {type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-      {msg}
-      <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', marginLeft: 4, padding: 0, display: 'flex' }}>
-        <X size={14} />
-      </button>
-    </div>
-  );
-};
+
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
 
@@ -222,9 +198,10 @@ export const AdiantamentosPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null);
   const [selected, setSelected] = useState<Adiantamento | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'error' } | null>(null);
-
-  const notify = useCallback((msg: string, type: 'ok' | 'error' = 'ok') => setToast({ msg, type }), []);
+  const notify = useCallback((msg: string, type: 'ok' | 'error' = 'ok') => {
+    if (type === 'error') toast.error(msg);
+    else toast.success(msg);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -370,9 +347,24 @@ export const AdiantamentosPage: React.FC = () => {
         @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes popIn { from { opacity:0; transform:scale(.94) } to { opacity:1; transform:scale(1) } }
         @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+        /* Dark Mode Overrides */
+        html.dark .adi-page { background: #0B0F19 !important; }
+        html.dark .adi-page h1, html.dark .adi-page p, html.dark .adi-page div, html.dark .adi-page span, html.dark .adi-page td, html.dark .adi-page th { color: #f1f5f9; }
+        html.dark .adi-page [style*="color: #94a3b8"] { color: #64748b !important; }
+        html.dark .adi-page [style*="color: #0f172a"] { color: #f8fafc !important; }
+        html.dark .adi-page [style*="background: #fff"] { background: rgba(30,41,59,0.5) !important; border-color: rgba(255,255,255,0.1) !important; }
+        html.dark .adi-page [style*="background: #f8fafc"] { background: rgba(15,23,42,0.5) !important; border-color: rgba(255,255,255,0.05) !important; }
+        html.dark .adi-page [style*="border-bottom: 2px solid #f1f5f9"] { border-bottom: 2px solid rgba(255,255,255,0.1) !important; }
+        html.dark .adi-page [style*="border-bottom: 1px solid #f1f5f9"] { border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
+        html.dark .adi-row:hover td { background: rgba(255,255,255,0.02) !important; }
+        
+        /* Modals and inputs */
+        html.dark [style*="background: rgba(15,23,42,0.55)"] { background: rgba(0,0,0,0.7) !important; }
+        html.dark [style*="background: #fff; border-radius: 20px"] { background: #1E293B !important; }
+        html.dark [style*="background: #f8fafc"] { background: #0F172A !important; border-color: rgba(255,255,255,0.1) !important; color: #fff !important; }
       `}</style>
 
       <div className="adi-page" style={{ minHeight: '100vh', background: '#f8fafc', padding: '32px 24px' }}>
@@ -556,7 +548,6 @@ export const AdiantamentosPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Modais ── */}
       {modal && (
         <Modal
           title={modal === 'create' ? 'Novo Adiantamento' : 'Editar Adiantamento'}
@@ -571,10 +562,6 @@ export const AdiantamentosPage: React.FC = () => {
             loading={submitLoading}
           />
         </Modal>
-      )}
-
-      {toast && (
-        <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
     </>
   );

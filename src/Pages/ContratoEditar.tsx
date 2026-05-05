@@ -4,6 +4,7 @@ import {
   FileText, ChevronLeft, Save, Loader2, AlertTriangle, Info, User,
 } from 'lucide-react';
 import { ContratoService, ClienteService } from '../api/api';
+import { toast } from 'sonner';
 
 type ContratoForm = {
   valor_enviado: number;
@@ -82,7 +83,7 @@ const formatDate = (date: string) => {
         original.current = { ...valores, dia_vencimento: diaVenc };
       } catch (err) {
         console.error(err);
-        alert('Não foi possível carregar o contrato.');
+        toast.error('Não foi possível carregar o contrato.');
       } finally {
         setFetching(false);
       }
@@ -97,7 +98,7 @@ const formatDate = (date: string) => {
     // ✅ Converte para número só aqui, na hora de usar
     const diaNum = parseInt(diaVencimento, 10);
     if (isNaN(diaNum) || diaNum < 1 || diaNum > 28) {
-      alert('Dia de vencimento inválido. Use um valor entre 1 e 28.');
+      toast.error('Dia de vencimento inválido. Use um valor entre 1 e 28.');
       return;
     }
 
@@ -129,10 +130,10 @@ const formatDate = (date: string) => {
 
       if (Object.keys(payload).length === 0) {
         if (diaMudou) {
-          alert('✓ Dia de vencimento atualizado! Todas as parcelas pendentes foram ajustadas.');
+          toast.success('Dia de vencimento atualizado! Todas as parcelas pendentes foram ajustadas.');
           navigate(-1);
         } else {
-          alert('Nenhuma alteração detectada.');
+          toast.info('Nenhuma alteração detectada.');
         }
         return;
       }
@@ -141,14 +142,14 @@ const formatDate = (date: string) => {
       const resp = res.data;
 
       const msg = resp.deve_regenerar
-        ? `✓ Contrato atualizado!\n${resp.parcelas_regeneradas} parcela(s) recriada(s).`
-        : '✓ Contrato atualizado com sucesso!';
+        ? `Contrato atualizado! ${resp.parcelas_regeneradas} parcela(s) recriada(s).`
+        : 'Contrato atualizado com sucesso!';
 
-      alert(diaMudou ? `✓ Dia de vencimento atualizado!\n${msg}` : msg);
+      toast.success(diaMudou ? `Dia de vencimento atualizado! ${msg}` : msg);
       navigate(-1);
     } catch (err: any) {
       const detail = err.response?.data?.detail;
-      alert('Erro: ' + (typeof detail === 'string' ? detail : 'Verifique os dados e tente novamente.'));
+      toast.error('Erro: ' + (typeof detail === 'string' ? detail : 'Verifique os dados e tente novamente.'));
     } finally {
       setLoading(false);
     }
@@ -174,41 +175,41 @@ const formatDate = (date: string) => {
       });
     };
 
-  const inputCls = "w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-slate-700 text-base";
+  const inputCls = "w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-slate-700 dark:text-white text-base transition-colors";
 
   if (fetching) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] flex items-center justify-center transition-colors duration-200">
       <div className="flex items-center gap-3 text-slate-400 font-bold">
-        <Loader2 className="animate-spin" size={20} /> Carregando contrato...
+        <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={20} /> Carregando contrato...
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-12 px-4 font-sans transition-colors duration-200">
       <div className="max-w-2xl mx-auto">
 
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 mb-6 font-medium text-sm transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-6 font-medium text-sm transition-colors"
         >
           <ChevronLeft size={18} /> Cancelar e Voltar
         </button>
 
         <header className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Ajustar <span className="text-indigo-600">Contrato #{id}</span>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Ajustar <span className="text-indigo-600 dark:text-indigo-400">Contrato #{id}</span>
           </h1>
-          <p className="text-slate-500 mt-2">Apenas os campos alterados serão enviados ao servidor.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Apenas os campos alterados serão enviados ao servidor.</p>
         </header>
 
-        <div className="mb-8 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
-          <div className="p-2 bg-white rounded-lg text-amber-500 shadow-sm">
+        <div className="mb-8 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl flex items-start gap-4">
+          <div className="p-2 bg-white dark:bg-slate-800 rounded-lg text-amber-500 dark:text-amber-400 shadow-sm transition-colors">
             <AlertTriangle size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-black text-amber-800 uppercase tracking-wider">Atenção</h3>
-            <p className="text-sm text-amber-700 mt-1">
+            <h3 className="text-sm font-black text-amber-800 dark:text-amber-500 uppercase tracking-wider">Atenção</h3>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
               Alterar o <strong>dia de vencimento</strong> atualiza o dia em todas as parcelas pendentes/atrasadas.
               Alterar <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,{' '}
               <strong>data de início</strong> ou <strong>spread</strong> irá deletar e recriar
@@ -220,10 +221,10 @@ const formatDate = (date: string) => {
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* ── DADOS DO CLIENTE ── */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm text-violet-600"><User size={20} /></div>
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Dados do Cliente</h2>
+          <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-violet-600 dark:text-violet-400"><User size={20} /></div>
+              <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">Dados do Cliente</h2>
             </div>
             <div className="p-8">
               <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">
@@ -249,10 +250,10 @@ const formatDate = (date: string) => {
           </div>
 
           {/* ── DADOS DO CONTRATO ── */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600"><FileText size={20} /></div>
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Valores e Prazos</h2>
+          <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400"><FileText size={20} /></div>
+              <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">Valores e Prazos</h2>
             </div>
 
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -275,12 +276,12 @@ const formatDate = (date: string) => {
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">
                   Spread por Parcela (R$) ✦
-                  <span className="ml-2 normal-case font-normal text-indigo-400">calculado automaticamente</span>
+                  <span className="ml-2 normal-case font-normal text-indigo-400 dark:text-indigo-500">calculado automaticamente</span>
                 </label>
                 <input
                   type="number" step="0.01" readOnly
                   value={form.spread_por_parcela}
-                  className={`${inputCls} bg-indigo-50 text-indigo-700 cursor-not-allowed`}
+                  className={`${inputCls} bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 cursor-not-allowed`}
                 />
               </div>
 
@@ -305,9 +306,9 @@ const formatDate = (date: string) => {
                     type="checkbox"
                     checked={form.ativo}
                     onChange={setF('ativo')}
-                    className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                    className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-800"
                   />
-                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900">
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                     Contrato Ativo
                   </span>
                 </label>
@@ -321,8 +322,8 @@ const formatDate = (date: string) => {
           </div>
 
           {/* ── Botão ── */}
-          <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-            <div className="flex items-center gap-3 text-indigo-600">
+          <div className="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 transition-colors">
+            <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400">
               <Info size={18} />
               <span className="text-xs font-bold uppercase tracking-tight">Parcelas pagas nunca são alteradas</span>
             </div>

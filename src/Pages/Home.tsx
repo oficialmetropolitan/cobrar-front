@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ClienteService, DashboardService } from '../api/api';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -63,9 +64,10 @@ export const PaginaPrincipal: React.FC = () => {
     setClientes(prev =>
       prev.map(c => c.id === id ? { ...c, status: novoStatus } : c)
     );
+    toast.success(`Status atualizado para ${novoStatus}`);
   } catch (error) {
     console.error("Erro ao mudar status:", error);
-    alert("Não foi possível atualizar o status.");
+    toast.error("Não foi possível atualizar o status.");
   } finally {
     setProcessandoId(null);
   }
@@ -73,9 +75,9 @@ export const PaginaPrincipal: React.FC = () => {
 
 // Config visual para cada status:
 const statusConfig: Record<string, { label: string; classes: string; icon: React.ReactNode }> = {
-  ativo:     { label: 'ativo',     classes: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: <CheckCircle2 size={12} /> },
-  inativo:   { label: 'inativo',   classes: 'bg-slate-100 text-slate-500 border-slate-200',      icon: <XCircle size={12} /> },
-  negativo:  { label: 'negativo',  classes: 'bg-rose-50 text-rose-600 border-rose-100',          icon: <AlertCircle size={12} /> },
+  ativo:     { label: 'ativo',     classes: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20', icon: <CheckCircle2 size={12} /> },
+  inativo:   { label: 'inativo',   classes: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700',      icon: <XCircle size={12} /> },
+  negativo:  { label: 'negativo',  classes: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20',          icon: <AlertCircle size={12} /> },
 };
 
   const carregarDados = async () => {
@@ -145,26 +147,27 @@ useEffect(() => { localStorage.setItem('filtro_busca', busca); }, [busca]);
 useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }, [modalidadeFiltro]);
 
  
-  const dadosGrafico = useMemo(() => {
+const dadosGrafico = useMemo(() => {
     return evolucao.map((item) => ({
       mes: item.mes,
-      Montante: parseFloat(item.montante_mensal) || 0,
-      Spread: parseFloat(item.spread_mensal) || 0,
-      Inadimplência: parseFloat(item.inadimplencia_mensal) || 0,
+
+      Montante: Number(item.montante_mensal) || 0,
+      Spread: Number(item.spread_realizado) || 0,
+      Inadimplência: Number(item.inadimplencia_mensal) || 0,
     }));
   }, [evolucao]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <div className="max-w-[1400px] mx-auto px-4 py-8">
 
         {/* HEADER */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Metropolitan <span className="text-indigo-600">Cobranças</span>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+              Metropolitan <span className="text-indigo-600 dark:text-indigo-400">Cobranças</span>
             </h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">Visão geral da sua carteira de recebíveis.</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 font-medium">Visão geral da sua carteira de recebíveis.</p>
           </div>
           <button
             onClick={() => navigate('/clientes/novo')}
@@ -183,71 +186,108 @@ useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }
         {/* DASHBOARD CARDS */}
         {resumo && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
               <div className="flex justify-between mb-4">
-                <Users size={20} className="text-indigo-600" />
-                <span className="text-xs font-bold text-indigo-600">GERAL</span>
+                <Users size={20} className="text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">GERAL</span>
               </div>
-              <p className="text-sm text-slate-500">Total de Clientes</p>
-              <h3 className="text-3xl font-bold">{resumo.carteira.total_clientes}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Total de Clientes</p>
+              <h3 className="text-3xl font-bold dark:text-white">{resumo.carteira.total_clientes}</h3>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
               <div className="flex justify-between mb-4">
-                <Wallet size={20} className="text-emerald-600" />
-                <span className="text-xs font-bold text-emerald-600">CARTEIRA</span>
+                <Wallet size={20} className="text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">CARTEIRA</span>
               </div>
-              <p className="text-sm text-slate-500">Montante Total</p>
-              <h3 className="text-3xl font-bold">{formatarMoeda(resumo.carteira.montante_total_recebido)}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Montante Total</p>
+              <h3 className="text-3xl font-bold dark:text-white">{formatarMoeda(resumo.carteira.montante_total_recebido)}</h3>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
               <div className="flex justify-between mb-4">
-                <TrendingUp size={20} className="text-indigo-600" />
-                <span className="text-xs font-bold text-indigo-600">SPREAD</span>
+                <TrendingUp size={20} className="text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">SPREAD</span>
               </div>
-              <p className="text-sm text-slate-500">Spread Total da Carteira</p>
-              <h3 className="text-3xl font-bold text-indigo-600">{formatarMoeda(resumo.carteira.spread_total_carteira)}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Spread Total da Carteira</p>
+              <h3 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{formatarMoeda(resumo.carteira.spread_total_carteira)}</h3>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
               <div className="flex justify-between mb-4">
-                <AlertCircle size={20} className="text-rose-600" />
-                <span className="text-xs font-bold text-rose-600">RISCO</span>
+                <AlertCircle size={20} className="text-rose-600 dark:text-rose-400" />
+                <span className="text-xs font-bold text-rose-600 dark:text-rose-400">RISCO</span>
               </div>
-              <p className="text-sm text-slate-500">Inadimplência Total</p>
-              <h3 className="text-3xl font-bold text-rose-600">{formatarMoeda(resumo.inadimplencia.total_em_atraso)}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Inadimplência Total</p>
+              <h3 className="text-3xl font-bold text-rose-600 dark:text-rose-400">{formatarMoeda(resumo.inadimplencia.total_em_atraso)}</h3>
             </div>
           </div>
         )}
 
         {/* GRÁFICO DE EVOLUÇÃO MENSAL - NOVO */}
         {dadosGrafico.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 mb-10">
-            <h2 className="text-lg font-bold text-slate-800 mb-6">Evolução Mensal</h2>
+          <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm p-6 mb-10 transition-colors">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Evolução Mensal</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dadosGrafico} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="mes" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                <YAxis tickFormatter={formatarMoedaCurta} tick={{ fontSize: 11, fill: '#94a3b8' }} width={80} />
-                <Tooltip
+                <LineChart data={dadosGrafico} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.1)" vertical={false} />
+                  <XAxis 
+                    dataKey="mes" 
+                    tick={{ fontSize: 12, fill: '#94a3b8' }} 
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    tickFormatter={formatarMoedaCurta} 
+                    tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                    width={80} 
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
                   
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px' }}
-                />
-                <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '16px' }} />
-                <Line type="monotone" dataKey="Montante" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                <Line type="monotone" dataKey="Spread" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                <Line type="monotone" dataKey="Inadimplência" stroke="#f43f5e" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontSize: '13px' 
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '16px' }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Montante" 
+                    stroke="#10b981" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#10b981' }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Spread" 
+                    stroke="#6366f1" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#6366f1' }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Inadimplência" 
+                    stroke="#f43f5e" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#f43f5e' }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
           </div>
         )}
        
         {/* TABELA DE CLIENTES */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
           {/* Toolbar Atualizada */}
-          <div className="p-5 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white">
-            <h2 className="text-lg font-bold text-slate-800">Listagem de Clientes</h2>
+          <div className="p-5 border-b border-slate-100 dark:border-slate-700/50 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Listagem de Clientes</h2>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
               {/* Filtro por Modalidade */}
@@ -256,7 +296,7 @@ useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }
                 <select 
                   value={modalidadeFiltro}
                   onChange={(e) => setModalidadeFiltro(e.target.value)}
-                  className="pl-10 pr-8 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none text-slate-600 font-medium"
+                  className="pl-10 pr-8 py-2 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none text-slate-600 dark:text-slate-300 font-medium outline-none"
                 >
                   {modalidadesDisponiveis.map(mod => (
                     <option key={mod} value={mod}>{mod}</option>
@@ -272,14 +312,14 @@ useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }
                   placeholder="Buscar por nome ou documento..." 
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:text-white outline-none"
                 />
               </div>
             </div>
           </div>
 
           {loading ? (
-            <div className="py-24 flex flex-col items-center justify-center bg-white">
+            <div className="py-24 flex flex-col items-center justify-center">
               <div className="w-8 h-8 border-4 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
               <p className="mt-4 text-sm font-medium text-slate-400 italic">Sincronizando dados...</p>
             </div>
@@ -287,29 +327,28 @@ useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Documento</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Modalidade</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                  <tr className="bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-700/50">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cliente</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Documento</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Modalidade</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Status</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {/* Renderizar clientesFiltrados em vez de clientes */}
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                   {clientesFiltrados.map((cliente) => (
-                    <tr key={cliente.id} className="hover:bg-slate-50/80 transition-all group">
+                    <tr key={cliente.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">{cliente.nome}</span>
-                          <span className="text-xs text-slate-400">{FormatPhone(cliente.telefone)}</span>
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{cliente.nome}</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">{FormatPhone(cliente.telefone)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
                         {formatarcpfCnpj(cliente.cpf_cnpj)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
                           {cliente.modalidade}
                         </span>
                       </td>
@@ -331,7 +370,7 @@ useEffect(() => { localStorage.setItem('filtro_modalidade', modalidadeFiltro); }
                             })()}
                           </td>
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => navigate(`/clientes/${cliente.id}`)} className="p-2 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                        <button onClick={() => navigate(`/clientes/${cliente.id}`)} className="p-2 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-600 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
                           <ChevronRight size={18} />
                         </button>
                       </td>

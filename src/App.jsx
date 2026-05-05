@@ -14,16 +14,16 @@ import  { AdiantamentosPage } from './Pages/Adiantamento'
 import {PaginaResumo} from './Pages/resumo';
 import { ContratoEdit } from './Pages/ContratoEditar';
 import { BaixaRepasse } from './Pages/TelaBaixaRepasse';
-
-
+import { PaginaGraficos } from './Pages/graficos';
+import { Toaster } from 'sonner';
+import { ThemeProvider } from './components/ThemeContext';
 
 
 const LayoutProtegido = () => {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-slate-900 transition-colors duration-200">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        
         <Outlet /> 
       </main>
     </div>
@@ -32,28 +32,28 @@ const LayoutProtegido = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-       
-        <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <Toaster position="bottom-right" richColors />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        <Route element={<AdminRoute><LayoutProtegido /></AdminRoute>}>
-
-            <Route path="/contrato/:id" element={<ContratoEdit />} />
-  
-            <Route path="/" element={<PaginaPrincipal />} />
-            <Route path="/dashboard" element={<DashboardEvolucaoCompleta />} />
-            <Route path="/clientes/editar/:id" element={<ClienteEdit />} />
-            <Route path="/contratos" element={<ContratosList />} />
-          
-            <Route path="/clientes/novo" element={<ClienteForm />} />
-            <Route path="/clientes/:id" element={<ClienteDetalhes />} />
-            <Route path="/adiantamentos" element={<AdiantamentosPage />} />
-            <Route path="/relatorios" element={<PaginaResumo />} />
-            <Route path="/baixa-repasse" element={<BaixaRepasse />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          <Route element={<AdminRoute><LayoutProtegido /></AdminRoute>}>
+              <Route path="/contrato/:id" element={<ContratoEdit />} />
+              <Route path="/" element={<PaginaPrincipal />} />
+              <Route path="/dashboard" element={<DashboardEvolucaoCompleta />} />
+              <Route path="/clientes/editar/:id" element={<ClienteEdit />} />
+              <Route path="/contratos" element={<ContratosList />} />
+              <Route path="/graficos" element={<PaginaGraficos />} />
+              <Route path="/clientes/novo" element={<ClienteForm />} />
+              <Route path="/clientes/:id" element={<ClienteDetalhes />} />
+              <Route path="/adiantamentos" element={<AdiantamentosPage />} />
+              <Route path="/relatorios" element={<PaginaResumo />} />
+              <Route path="/baixa-repasse" element={<BaixaRepasse />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Ativar dark mode por classe */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* O erro "border-border" acontece porque o código espera essa variável. 
    Vamos defini-la manualmente para o erro sumir: */
 @theme {

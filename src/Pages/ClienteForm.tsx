@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { OnboardingService, OnboardingPayload } from '../api/api';
 import { CCBExtractor, CCBExtractedData } from './Ccbextractor'; 
+import { toast } from 'sonner';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ if (name === 'telefone') {
         data_inicio: formData.data_inicio,
       };
       await OnboardingService.criar(payload);
+      toast.success('Cliente criado com sucesso!');
       navigate('/');
     } catch (error: any) {
       const detail = error.response?.data?.detail;
@@ -171,7 +173,7 @@ if (name === 'telefone') {
           : Array.isArray(detail)
           ? detail.map((d: any) => d.msg).join(', ')
           : 'Verifique os dados e tente novamente.';
-      alert('Erro ao salvar: ' + msg);
+      toast.error('Erro ao salvar: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -183,26 +185,27 @@ if (name === 'telefone') {
     if (vEnviado && vMontante && vMontante > vEnviado) {
       const spread = (vMontante - vEnviado).toFixed(2);
       setFormData(prev => ({ ...prev, spread_total: spread }));
+      toast.success('Diferença calculada e aplicada ao Spread.');
     } else {
-      alert('Para calcular o spread, o Montante deve ser maior que o Valor Enviado.');
+      toast.error('Para calcular o spread, o Montante deve ser maior que o Valor Enviado.');
     }
   };
 
   const inputCls = (field: keyof FormData) =>
-    `w-full px-4 py-3 bg-slate-50 border rounded-2xl outline-none font-medium transition-all
-     focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300
-     ${errors[field] ? 'border-red-300 bg-red-50' : 'border-transparent'}`;
+    `w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border rounded-2xl outline-none font-medium transition-all text-slate-900 dark:text-white
+     focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 dark:border-slate-700/50
+     ${errors[field] ? 'border-red-300 bg-red-50 dark:bg-red-900/10' : 'border-transparent'}`;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200">
       <div className="max-w-3xl mx-auto">
 
         {/* Voltar */}
         <button
           onClick={() => navigate('/')}
-          className="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors mb-6 font-medium text-sm"
+          className="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors mb-6 font-medium text-sm"
         >
           <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           Voltar para listagem
@@ -211,15 +214,14 @@ if (name === 'telefone') {
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                Novo <span className="text-indigo-600">Cadastro</span>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Novo <span className="text-indigo-600 dark:text-indigo-400">Cadastro</span>
               </h1>
-              <p className="text-slate-500 mt-2 font-medium">
+              <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
                 Crie o cliente e gere o contrato com parcelas em uma única operação.
               </p>
             </div>
 
-            {/* ── Botão para abrir/fechar o extrator ── */}
             {!filledByPDF && (
               <button
                 type="button"
@@ -263,12 +265,12 @@ if (name === 'telefone') {
         <form onSubmit={handleSubmit} noValidate className="space-y-8">
 
           {/* ── DADOS DO CLIENTE ── */}
-          <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600">
+          <section className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400">
                 <UserPlus size={20} />
               </div>
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">
+              <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">
                 Informações do Cliente
               </h2>
             </div>
@@ -341,12 +343,12 @@ if (name === 'telefone') {
           </section>
 
           {/* ── CONTRATO & PARCELAS ── */}
-          <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm text-emerald-600">
+          <section className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-emerald-600 dark:text-emerald-400">
                 <FileText size={20} />
               </div>
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">
+              <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">
                 Contrato e Parcelas
               </h2>
             </div>
@@ -481,18 +483,18 @@ if (name === 'telefone') {
             </div>
 
             {valorParcela > 0 && (
-              <div className="mx-8 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-indigo-700 font-medium">
-                  <CheckCircle2 size={16} className="text-indigo-500" />
+              <div className="mx-8 mb-6 p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-400 font-medium">
+                  <CheckCircle2 size={16} className="text-indigo-500 dark:text-indigo-400" />
                   Valor calculado por parcela
                 </div>
-                <span className="text-indigo-800 font-black text-lg">
+                <span className="text-indigo-800 dark:text-indigo-300 font-black text-lg">
                   {formatCurrency(valorParcela)}
                 </span>
               </div>
             )}
 
-            <div className="mx-8 mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 text-xs text-amber-700 font-medium leading-relaxed">
+            <div className="mx-8 mb-8 p-4 bg-amber-50 dark:bg-amber-500/10 rounded-2xl border border-amber-100 dark:border-amber-500/20 flex gap-3 text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
               <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
               As parcelas serão geradas automaticamente respeitando o dia de vencimento e a data de início informados.
             </div>

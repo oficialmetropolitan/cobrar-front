@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ClienteService } from '../api/api';
 import { CCBExtractor, CCBExtractedData } from './Ccbextractor';
+import { toast } from 'sonner';
 
 export const ClienteEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -153,10 +154,10 @@ export const ClienteEdit: React.FC = () => {
         dia_vencimento: Number(formData.dia_vencimento)
       };
       await ClienteService.atualizar(Number(id), dadosParaEnviar);
-      alert('Cadastro da Metropolitan atualizado!');
+      toast.success('Cadastro da Metropolitan atualizado!');
       navigate('/');
     } catch (err: any) {
-      alert('Erro ao salvar no banco.');
+      toast.error('Erro ao salvar no banco.');
     } finally {
       setLoading(false);
     }
@@ -165,18 +166,18 @@ export const ClienteEdit: React.FC = () => {
   if (fetching) return <div className="p-20 text-center">Carregando...</div>;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
       <div className="max-w-3xl mx-auto">
 
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 mb-6 font-medium text-sm">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-6 font-medium text-sm transition-colors">
           <ChevronLeft size={18} /> Voltar
         </button>
 
         {/* ── Header com botão CCB ── */}
         <header className="mb-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              Editar <span className="text-indigo-600">Cliente</span>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              Editar <span className="text-indigo-600 dark:text-indigo-400">Cliente</span>
             </h1>
 
             {/* Botão abrir/fechar extrator */}
@@ -224,11 +225,11 @@ export const ClienteEdit: React.FC = () => {
        
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600"><User size={20} /></div>
-                <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Cadastro</h2>
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400"><User size={20} /></div>
+                <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">Cadastro</h2>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <span className={`text-xs font-bold uppercase ${formData.ativo ? 'text-emerald-500' : 'text-slate-400'}`}>
@@ -241,32 +242,32 @@ export const ClienteEdit: React.FC = () => {
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">Nome Completo</label>
-                <input type="text" name="nome" required value={formData.nome} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium" />
+                <input type="text" name="nome" required value={formData.nome} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium text-slate-900 dark:text-white transition-colors" />
               </div>
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">CPF / CNPJ</label>
-                <input type="text" name="cpf_cnpj" placeholder="000.000.000-00" value={formData.cpf_cnpj} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium text-indigo-600" />
+                <input type="text" name="cpf_cnpj" placeholder="000.000.000-00" value={formData.cpf_cnpj} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium text-indigo-600 dark:text-indigo-400 transition-colors" />
               </div>
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">Telefone</label>
-                <input type="text" name="telefone" placeholder="(00) 00000-0000" value={formData.telefone} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium text-indigo-600" />
+                <input type="text" name="telefone" placeholder="(00) 00000-0000" value={formData.telefone} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium text-indigo-600 dark:text-indigo-400 transition-colors" />
               </div>
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">E-mail</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium" />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium text-slate-900 dark:text-white transition-colors" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600"><Save size={20} /></div>
-              <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Modalidades Metropolitan</h2>
+          <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-sm overflow-hidden transition-colors">
+            <div className="p-6 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400"><Save size={20} /></div>
+              <h2 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-widest">Modalidades Metropolitan</h2>
             </div>
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">Empresa / Modalidade</label>
-                <select name="modalidade" value={formData.modalidade} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium appearance-none">
+                <select name="modalidade" value={formData.modalidade} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium appearance-none text-slate-900 dark:text-white transition-colors">
                   <option value="">Selecione a Modalidade</option>
                   <option value="IPD">IPD</option>
                   <option value="HRSM">Hospital Regional</option>
@@ -285,7 +286,7 @@ export const ClienteEdit: React.FC = () => {
               </div>
               <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-2">Dia de Vencimento</label>
-                <input type="number" name="dia_vencimento" min="1" max="28" required value={formData.dia_vencimento} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl outline-none font-medium" />
+                <input type="number" name="dia_vencimento" min="1" max="28" required value={formData.dia_vencimento} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700/50 rounded-2xl outline-none font-medium text-slate-900 dark:text-white transition-colors" />
               </div>
             </div>
           </div>
