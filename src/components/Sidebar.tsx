@@ -72,10 +72,6 @@ export function Sidebar() {
           </div>
         </button>
 
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-sm font-medium">
-          <Settings size={18} className="text-slate-400" />
-          <span>Configurações</span>
-        </button>
 
         <button 
           onClick={handleLogout}
