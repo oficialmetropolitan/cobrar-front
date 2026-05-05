@@ -8,7 +8,7 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   
   const menuItems = [
-    { name: 'Dashboard', icon: Home, path: '/dashboard' },
+    { name: 'Por mês', icon: Home, path: '/dashboard' },
     { name: 'Relatórios', icon: TrendingUp, path: '/relatorios' },
     { name: 'Gráficos', icon: BarChart2, path: '/graficos' },
     { name: 'Adiantamentos', icon: Calendar, path: '/adiantamentos' },
