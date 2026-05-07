@@ -20,7 +20,7 @@ export const ClienteDetalhes: React.FC = () => {
   const [dataPagamento, setDataPagamento] = useState<string>(new Date().toISOString().split('T')[0]);
   const [observacao, setObservacao] = useState<string>('');
 
-  // ← NOVO: estado do modal de edição
+
   const [parcelaEditando, setParcelaEditando] = useState<any>(null);
 
   const hoje = new Date().toISOString().split('T')[0];
