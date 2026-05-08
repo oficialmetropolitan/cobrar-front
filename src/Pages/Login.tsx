@@ -18,18 +18,25 @@ export const Login = () => {
     formData.append('username', username);
     formData.append('password', password);
 
+
     try {
       const res = await axios.post('https://api.bancometropolitan.com.br/api/auth/token', formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
       
       // Salva os dados REAIS vindos do seu backend
-      localStorage.setItem('token', res.data.access_token);
-      localStorage.setItem('is_admin', String(res.data.is_admin)); 
-      localStorage.setItem('full_name', res.data.full_name);
-      
+      const token = res.data.access_token;
+      localStorage.setItem('token', token);
+      localStorage.setItem('is_admin', String(res.data.is_admin));
+
+      const meRes = await axios.get('https://api.bancometropolitan.com.br/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      localStorage.setItem('full_name', meRes.data.full_name);
+
       toast.success('Login realizado com sucesso!');
-      navigate('/'); 
+      navigate('/');
       
     } catch (error) {
       console.error("Erro no login:", error);
