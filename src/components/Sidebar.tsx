@@ -22,7 +22,7 @@ export function Sidebar() {
     navigate('/login');
   };
 
-const username = localStorage.getItem('username') || 'Usuário';
+const username = localStorage.getItem('full_name') || 'Usuário';
 
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-colors duration-200">
