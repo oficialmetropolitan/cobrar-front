@@ -29,7 +29,7 @@ const username = localStorage.getItem('full_name') || 'Usuário';
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
-            A
+            {username.split(' ').map(n => n[0]).join('')}
           </div>
           <div>
             <p className="text-sm font-bold text-slate-800 dark:text-white">{username}</p>
