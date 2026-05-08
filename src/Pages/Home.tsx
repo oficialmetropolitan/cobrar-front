@@ -243,7 +243,7 @@ const dadosGrafico = useMemo(() => {
           </div>
         )}
 
-        {/* GRÁFICO DE EVOLUÇÃO MENSAL - NOVO */}
+        {/* GRÁFICO DE EVOLUÇÃO MENSAL */}
         {dadosGrafico.length > 0 && (
           <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm p-6 mb-10 transition-colors">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Evolução Mensal</h2>

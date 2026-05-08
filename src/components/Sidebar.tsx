@@ -22,6 +22,8 @@ export function Sidebar() {
     navigate('/login');
   };
 
+const username = localStorage.getItem('username') || 'Usuário';
+
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-colors duration-200">
       <div className="p-6">
@@ -30,7 +32,7 @@ export function Sidebar() {
             A
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-800 dark:text-white">Administrador</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-white">{username}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Metropolitan</p>
           </div>
         </div>

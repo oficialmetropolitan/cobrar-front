@@ -26,6 +26,7 @@ export const Login = () => {
       // Salva os dados REAIS vindos do seu backend
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('is_admin', String(res.data.is_admin)); 
+      localStorage.setItem('username', username);
       
       toast.success('Login realizado com sucesso!');
       navigate('/'); 
