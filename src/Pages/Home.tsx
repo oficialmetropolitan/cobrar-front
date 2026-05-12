@@ -21,14 +21,14 @@ export const PaginaPrincipal: React.FC = () => {
     localStorage.getItem('filtro_busca') || ''
   );
   const [modalidadeFiltro, setModalidadeFiltro] = useState<string>(() => 
-    localStorage.getItem('filtro_modalidade') || 'Todas'
+    localStorage.getItem('filtro_modalidade') || 'TODAS'
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [processandoId, setProcessandoId] = useState<number | null>(null);
 
   const modalidadesDisponiveis = useMemo(() => {
     const mods = clientes.map(c => c.modalidade).filter(Boolean);
-    return ['Todas', ...Array.from(new Set(mods))];
+    return ['TODAS', ...Array.from(new Set(mods))];
   }, [clientes]);
 
 
@@ -52,7 +52,7 @@ export const PaginaPrincipal: React.FC = () => {
       const correspondeBusca =
         cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
         (cliente.cpf_cnpj && cliente.cpf_cnpj.includes(busca));
-      const correspondeModalidade = modalidadeFiltro === 'Todas' || cliente.modalidade === modalidadeFiltro;
+      const correspondeModalidade = modalidadeFiltro === 'TODAS' || cliente.modalidade === modalidadeFiltro;
       return correspondeBusca && correspondeModalidade;
     });
   }, [clientes, busca, modalidadeFiltro]);
