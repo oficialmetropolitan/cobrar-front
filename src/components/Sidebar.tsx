@@ -34,6 +34,7 @@ const username = localStorage.getItem('full_name') || 'Usuário';
           <div>
             <p className="text-sm font-bold text-slate-800 dark:text-white">{username}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Metropolitan</p>
+
           </div>
         </div>
         <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Metropolitan</h2>
@@ -73,8 +74,7 @@ const username = localStorage.getItem('full_name') || 'Usuário';
             <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${theme === 'dark' ? 'left-4.5 bg-indigo-400' : 'left-0.5'}`} />
           </div>
         </button>
-
-
+        
         <button 
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all text-sm font-bold mt-2"
@@ -84,5 +84,6 @@ const username = localStorage.getItem('full_name') || 'Usuário';
         </button>
       </div>
     </aside>
+
   );
 }

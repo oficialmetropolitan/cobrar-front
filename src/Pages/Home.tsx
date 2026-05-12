@@ -31,6 +31,22 @@ export const PaginaPrincipal: React.FC = () => {
     return ['TODAS', ...Array.from(new Set(mods))];
   }, [clientes]);
 
+
+  const NOMES_MODALIDADES: Record<string, string> = {
+  'LAB FROTA': 'Laboratório de Frota',
+  'HRSM': 'Hospital Regional',
+  'IPD': 'IPD',
+  'WIZZER': 'Wizzer',
+  'PF': 'Pessoa Física',
+  'PJ': 'Pessoa Jurídica',
+  'coletek': 'Coletek',
+  'MAQUININHA': 'Maquininha',
+  'D-RADIO': 'D-Radio',
+  'IPECONT': 'Ipecont',
+  'INOVACON': 'Inovacon',
+
+  // Adicione os outros aqui...
+};
   const clientesFiltrados = useMemo(() => {
     return clientes.filter(cliente => {
       const correspondeBusca =
@@ -310,18 +326,41 @@ const dadosGrafico = useMemo(() => {
             
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
               {/* Filtro por Modalidade */}
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <select 
-                  value={modalidadeFiltro}
-                  onChange={(e) => setModalidadeFiltro(e.target.value)}
-                  className="pl-10 pr-8 py-2 bg-slate-50 dark:bg-slate-900/50 border border-transparent dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none text-slate-600 dark:text-slate-300 font-medium outline-none"
-                >
-                  {modalidadesDisponiveis.map(mod => (
-                    <option key={mod} value={mod}>{mod}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="relative w-full sm:w-56 group">
+  {/* Ícone de Filtro Lateral */}
+  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors pointer-events-none">
+    <Filter size={16} />
+  </div>
+
+  <select 
+    value={modalidadeFiltro}
+    onChange={(e) => setModalidadeFiltro(e.target.value)}
+    className="
+      w-full pl-10 pr-10 py-2.5 
+      bg-white dark:bg-slate-900/50 
+      border border-slate-200 dark:border-slate-700 
+      rounded-xl text-sm font-medium
+      text-slate-600 dark:text-slate-300
+      appearance-none cursor-pointer
+      hover:border-slate-300 dark:hover:border-slate-600
+      focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500
+      transition-all duration-200
+    "
+  >
+    {modalidadesDisponiveis.map(mod => (
+      <option key={mod} value={mod} className="bg-white dark:bg-slate-800">
+        {NOMES_MODALIDADES[mod] || mod}
+      </option>
+    ))}
+  </select>
+
+  {/* Seta Customizada (Chevron) */}
+  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-slate-500 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
+  </div>
+</div>
 
               {/* Busca por Texto */}
               <div className="relative w-full sm:w-80 group">
