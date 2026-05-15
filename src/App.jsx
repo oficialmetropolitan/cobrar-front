@@ -17,6 +17,8 @@ import { BaixaRepasse } from './Pages/TelaBaixaRepasse';
 import { PaginaGraficos } from './Pages/graficos';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeContext';
+import EsqueciSenhaPage from './Pages/EsqueciSenha';
+import RedefinirSenhaPage from './Pages/config';
 
 
 const LayoutProtegido = () => {
@@ -50,6 +52,8 @@ function App() {
               <Route path="/adiantamentos" element={<AdiantamentosPage />} />
               <Route path="/relatorios" element={<PaginaResumo />} />
               <Route path="/baixa-repasse" element={<BaixaRepasse />} />
+          <Route path="/esqueci-senha"   element={<EsqueciSenhaPage />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

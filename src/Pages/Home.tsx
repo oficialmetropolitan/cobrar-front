@@ -209,26 +209,24 @@ const dadosGrafico = useMemo(() => {
         {resumo && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
-              
-           
-  <div className="flex justify-between mb-4">
-    <Users size={20} className="text-indigo-600 dark:text-indigo-400" />
-    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">GERAL</span>
-  </div>
-  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Clientes</p>
-  <div className="flex items-end gap-4">
-    <div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 mb-0.5">Ativos</p>
-      <h3 className="text-3xl font-bold dark:text-white">{contagemStatus.ativos}</h3>
-    </div>
-    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mb-1" />
-    <div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-0.5">Negativos</p>
-      <h3 className="text-3xl font-bold text-rose-600 dark:text-rose-400">{contagemStatus.negativos}</h3>
-    </div>
-  </div>
-</div>
-           
+                        
+                  <div className="flex justify-between mb-4">
+                    <Users size={20} className="text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">GERAL</span>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Clientes</p>
+                  <div className="flex items-end gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 mb-0.5">Ativos</p>
+                      <h3 className="text-3xl font-bold dark:text-white">{contagemStatus.ativos}</h3>
+                    </div>
+                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mb-1" />
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-0.5">Negativos</p>
+                      <h3 className="text-3xl font-bold text-rose-600 dark:text-rose-400">{contagemStatus.negativos}</h3>
+                    </div>
+                  </div>
+                </div>         
 
             <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm transition-colors">
               <div className="flex justify-between mb-4">
