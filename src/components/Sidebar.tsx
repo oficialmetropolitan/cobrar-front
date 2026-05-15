@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Users, FileText, Calendar, TrendingUp, Settings, BarChart2, Sun, Moon, LogOut } from 'lucide-react';
+import { Home, Users, FileText, Calendar, TrendingUp, Settings, BarChart2, Sun, Moon, LogOut, Key } from 'lucide-react';
 import { LogoutButton } from './LogoutButton';
 import { useTheme } from './ThemeContext';
 
@@ -74,6 +74,16 @@ const username = localStorage.getItem('full_name') || 'Usuário';
             <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${theme === 'dark' ? 'left-4.5 bg-indigo-400' : 'left-0.5'}`} />
           </div>
         </button>
+
+        <div>
+          <button
+            onClick={() => navigate('/esqueci-senha', { state: { email: localStorage.getItem('user_email') || '' } })}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-sm font-medium"
+          >
+            <Key size={18} />
+            <span>Redefinir Senha</span>
+          </button> 
+        </div>
         
         <button 
           onClick={handleLogout}

@@ -18,7 +18,7 @@ import { PaginaGraficos } from './Pages/graficos';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeContext';
 import EsqueciSenhaPage from './Pages/EsqueciSenha';
-import RedefinirSenhaPage from './Pages/config';
+import RedefinirSenhaPage from './Pages/RedefinirSenhaPage';
 
 
 const LayoutProtegido = () => {
@@ -40,6 +40,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
 
+
           <Route element={<AdminRoute><LayoutProtegido /></AdminRoute>}>
               <Route path="/contrato/:id" element={<ContratoEdit />} />
               <Route path="/" element={<PaginaPrincipal />} />
@@ -52,7 +53,7 @@ function App() {
               <Route path="/adiantamentos" element={<AdiantamentosPage />} />
               <Route path="/relatorios" element={<PaginaResumo />} />
               <Route path="/baixa-repasse" element={<BaixaRepasse />} />
-          <Route path="/esqueci-senha"   element={<EsqueciSenhaPage />} />
+            <Route path="/esqueci-senha"   element={<EsqueciSenhaPage />} />
           <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
           </Route>
         </Routes>
